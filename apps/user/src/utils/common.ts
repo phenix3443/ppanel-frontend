@@ -32,28 +32,9 @@ export function setAuthorization(token: string): void {
 
 export function getRedirectUrl(): string {
   if (typeof window === "undefined") return "/dashboard";
-
-  // With hash-based routing, query params may live after the `#`.
-  // Examples:
-  //   /#/auth/?redirect=%2Fdashboard
-  //   /#/auth?redirect=%2Fdashboard
-  const hash = window.location.hash || "";
-  const queryIndex = hash.indexOf("?");
-  const hashQuery = queryIndex >= 0 ? hash.slice(queryIndex + 1) : "";
-
-  const params = new URLSearchParams(hashQuery || window.location.search);
+  const params = new URLSearchParams(window.location.search);
   const redirect = params.get("redirect");
-
-  if (redirect?.startsWith("/")) return redirect;
-
-  // Fallback: session storage redirect set by Logout()
-  const stored = sessionStorage.getItem("redirect-url") || "";
-  if (stored.startsWith("/")) {
-    sessionStorage.removeItem("redirect-url");
-    return stored;
-  }
-
-  return "/dashboard";
+  return redirect?.startsWith("/") ? redirect : "/dashboard";
 }
 
 export function setRedirectUrl(value?: string) {

@@ -421,7 +421,6 @@ declare namespace API {
     /** google, facebook, apple, telegram, github etc. */
     method: string;
     callback: Record<string, any>;
-    invite?: string;
   };
 
   type OAuthLoginResponse = {

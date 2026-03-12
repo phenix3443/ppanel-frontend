@@ -24,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Progress } from "@workspace/ui/components/progress";
 import { Separator } from "@workspace/ui/components/separator";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Icon } from "@workspace/ui/composed/icon";
@@ -238,7 +237,7 @@ export default function Content() {
                 {shouldShowWatermark && (
                   <div
                     className={cn(
-                      "pointer-events-none absolute top-0 left-0 z-0 h-full w-full overflow-hidden mix-blend-difference brightness-150 contrast-200 invert-[0.2]",
+                      "pointer-events-none absolute top-0 left-0 z-10 h-full w-full overflow-hidden mix-blend-difference brightness-150 contrast-200 invert-[0.2]",
                       {
                         "text-destructive": item.status === 2,
                         "text-white": isActuallyExpired || item.status === 4,
@@ -272,7 +271,7 @@ export default function Content() {
                     </div>
                   </div>
                 )}
-                <CardHeader className="relative z-10 flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
                   <CardTitle className="font-medium">
                     {item.subscribe.name}
                     <p className="mt-1 text-foreground/50 text-sm">
@@ -283,7 +282,7 @@ export default function Content() {
                     </p>
                   </CardTitle>
                   {item.status !== 4 && (
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="destructive">
@@ -337,7 +336,7 @@ export default function Content() {
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="relative z-10">
+                <CardContent>
                   <ul className="grid grid-cols-2 gap-3 *:flex *:flex-col *:justify-between lg:grid-cols-4">
                     <li>
                       <span className="text-muted-foreground">
@@ -350,23 +349,6 @@ export default function Content() {
                           value={item.upload + item.download}
                         />
                       </span>
-                      {!!item.traffic && (
-                        <Progress
-                          className={
-                            (item.upload + item.download) / item.traffic > 0.8
-                              ? "[&>div]:bg-destructive"
-                              : (item.upload + item.download) / item.traffic >
-                                  0.6
-                                ? "[&>div]:bg-yellow-500"
-                                : ""
-                          }
-                          value={Math.min(
-                            ((item.upload + item.download) / item.traffic) *
-                              100,
-                            100
-                          )}
-                        />
-                      )}
                     </li>
                     <li>
                       <span className="text-muted-foreground">

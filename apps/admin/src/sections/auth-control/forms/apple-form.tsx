@@ -287,7 +287,7 @@ export default function AppleForm() {
                     <FormDescription>
                       {t(
                         "apple.redirectUriDescription",
-                        "Backend API callback URL that Apple will POST to (e.g. https://api.example.com/v1/auth/oauth/callback/apple). Must be registered in Apple Developer Portal."
+                        "API address for redirect URL after successful Apple authentication. Do not end with /"
                       )}
                     </FormDescription>
                     <FormMessage />
