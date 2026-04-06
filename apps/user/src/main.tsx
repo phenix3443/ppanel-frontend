@@ -27,7 +27,6 @@ initializeI18n({
   supportedLngs,
   fallbackLng,
   ns: [
-    "affiliate",
     "auth",
     "components",
     "dashboard",
