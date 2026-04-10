@@ -68,7 +68,7 @@
 
 ```bash
 git clone https://github.com/perfect-panel/frontend.git
-cd ppanel-web
+cd frontend
 
 # 安装依赖
 bun install
