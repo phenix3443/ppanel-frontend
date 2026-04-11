@@ -4,6 +4,7 @@ export type FieldConfig = {
   name: string;
   type: "input" | "select" | "switch" | "number" | "textarea";
   label: string;
+  required?: boolean;
   placeholder?: string;
   options?: readonly string[];
   defaultValue?: any;

@@ -54,8 +54,32 @@ import {
   getLabel,
   getProtocolDefaultConfig,
   protocols as PROTOCOLS,
+  type ProtocolType,
   useProtocolFields,
 } from "./form-schema";
+
+function getFieldLabel(field: FieldConfig) {
+  return (
+    <>
+      {field.label}
+      {field.required ? (
+        <span aria-hidden="true" className="ml-1 text-destructive">
+          *
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function getVisibleRequiredFields(
+  fields: FieldConfig[],
+  protocolData: Record<string, any>
+) {
+  return fields.filter(
+    (field) =>
+      field.required && (!field.condition || field.condition(protocolData, {}))
+  );
+}
 
 function DynamicField({
   field,
@@ -88,7 +112,7 @@ function DynamicField({
           {...commonProps}
           render={({ field: fieldProps }) => (
             <FormItem>
-              <FormLabel>{field.label}</FormLabel>
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <EnhancedInput
                   {...fieldProps}
@@ -178,7 +202,7 @@ function DynamicField({
           {...commonProps}
           render={({ field: fieldProps }) => (
             <FormItem>
-              <FormLabel>{field.label}</FormLabel>
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <EnhancedInput
                   {...fieldProps}
@@ -207,7 +231,7 @@ function DynamicField({
           {...commonProps}
           render={({ field: fieldProps }) => (
             <FormItem>
-              <FormLabel>{field.label}</FormLabel>
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <Select
                   onValueChange={(v) => fieldProps.onChange(v)}
@@ -239,7 +263,7 @@ function DynamicField({
           {...commonProps}
           render={({ field: fieldProps }) => (
             <FormItem>
-              <FormLabel>{field.label}</FormLabel>
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <div className="pt-2">
                   <Switch
@@ -260,7 +284,7 @@ function DynamicField({
           {...commonProps}
           render={({ field: fieldProps }) => (
             <FormItem className="col-span-2">
-              <FormLabel>{field.label}</FormLabel>
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <textarea
                   {...fieldProps}
@@ -399,12 +423,100 @@ export default function ServerForm(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
-  async function handleSubmit(values: Record<string, any>) {
-    const filteredProtocols = (values?.protocols || []).filter(
-      (protocol: any) => {
-        const port = Number(protocol?.port);
-        return protocol && Number.isFinite(port) && port > 0 && port <= 65_535;
+  function validateEnabledProtocols(values: Record<string, any>) {
+    let firstInvalidProtocol: ProtocolType | undefined;
+
+    for (const [index, protocol] of (values?.protocols || []).entries()) {
+      if (!protocol?.enable) continue;
+
+      const protocolType = protocol.type as ProtocolType;
+      const fields = PROTOCOL_FIELDS[protocolType] || [];
+      const requiredFields = getVisibleRequiredFields(fields, protocol);
+
+      for (const field of requiredFields) {
+        const value = protocol[field.name];
+        const fieldPath = `protocols.${index}.${field.name}` as any;
+
+        if (field.type === "number") {
+          const numericValue =
+            typeof value === "number" ? value : Number(value ?? Number.NaN);
+          const hasValue = Number.isFinite(numericValue);
+          const inMinRange =
+            field.min === undefined || numericValue >= field.min;
+          const inMaxRange =
+            field.max === undefined || numericValue <= field.max;
+
+          if (!(hasValue && inMinRange && inMaxRange)) {
+            form.setError(fieldPath, {
+              type: "manual",
+              message: t(
+                "validation.requiredNumberField",
+                "{{field}} is required and must be between {{min}} and {{max}}",
+                {
+                  field: field.label,
+                  min: field.min ?? 0,
+                  max: field.max ?? 65_535,
+                }
+              ),
+            });
+            firstInvalidProtocol ??= protocolType;
+          }
+          continue;
+        }
+
+        if (field.type === "select") {
+          const hasValue = typeof value === "string" && value.trim().length > 0;
+          const isAllowed =
+            !field.options || (hasValue && field.options.includes(value));
+
+          if (!(hasValue && isAllowed)) {
+            form.setError(fieldPath, {
+              type: "manual",
+              message: t(
+                "validation.requiredSelectField",
+                "{{field}} is required",
+                { field: field.label }
+              ),
+            });
+            firstInvalidProtocol ??= protocolType;
+          }
+          continue;
+        }
+
+        const hasValue =
+          typeof value === "string"
+            ? value.trim().length > 0
+            : value !== null && value !== undefined;
+
+        if (!hasValue) {
+          form.setError(fieldPath, {
+            type: "manual",
+            message: t("validation.requiredField", "{{field}} is required", {
+              field: field.label,
+            }),
+          });
+          firstInvalidProtocol ??= protocolType;
+        }
       }
+    }
+
+    if (firstInvalidProtocol) {
+      setAccordionValue(firstInvalidProtocol);
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleSubmit(values: Record<string, any>) {
+    form.clearErrors();
+
+    if (!validateEnabledProtocols(values)) {
+      return;
+    }
+
+    const filteredProtocols = (values?.protocols || []).filter(
+      (protocol: any) => protocol?.enable
     );
 
     const result = {
@@ -605,6 +717,15 @@ export default function ServerForm(props: {
                             )}
                             onCheckedChange={(checked) => {
                               form.setValue(`protocols.${i}.enable`, checked);
+                              if (checked) {
+                                setAccordionValue(type);
+                                return;
+                              }
+
+                              if (accordionValue === type) {
+                                setAccordionValue(undefined);
+                              }
+                              form.clearErrors(`protocols.${i}` as any);
                             }}
                             onClick={(e) => e.stopPropagation()}
                           />

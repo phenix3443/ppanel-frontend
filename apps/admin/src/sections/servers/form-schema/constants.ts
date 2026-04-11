@@ -72,10 +72,7 @@ export const SECURITY = {
 } as const;
 
 export const FLOWS = {
-  vless: [
-    "none",
-    "xtls-rprx-vision",
-  ] as const,
+  vless: ["none", "xtls-rprx-vision"] as const,
 } as const;
 
 export const TUIC_UDP_RELAY_MODES = ["native", "quic"] as const;
