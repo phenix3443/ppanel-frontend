@@ -27,7 +27,18 @@ import { basicUpdateService } from "@workspace/ui/services/gateway/basicUpdateSe
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import packageJson from "../../../../../../package.json";
+
+async function getDeployedWebVersion() {
+  const response = await fetch(new URL("version.lock", window.location.href), {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load version.lock: ${response.status}`);
+  }
+
+  return (await response.text()).trim();
+}
 
 export default function SystemVersionCard() {
   const { t } = useTranslation("tool");
@@ -81,6 +92,13 @@ export default function SystemVersionCard() {
     retry: 1,
   });
 
+  const { data: deployedWebVersion } = useQuery({
+    queryKey: ["deployedWebVersion"],
+    queryFn: getDeployedWebVersion,
+    staleTime: 0,
+    retry: 1,
+  });
+
   const updateServerMutation = useMutation({
     mutationFn: async (serviceName: string) => {
       await basicUpdateService({
@@ -128,6 +146,8 @@ export default function SystemVersionCard() {
   const hasServerNewVersion = serverVersionInfo?.has_update ?? false;
   const hasWebNewVersion = webVersionInfo?.has_update ?? false;
   const isUpdatingServer = updateServerMutation.isPending;
+  const currentWebVersion =
+    deployedWebVersion || webVersionInfo?.current_version || "-";
 
   return (
     <Card className="gap-0 p-3">
@@ -187,7 +207,7 @@ export default function SystemVersionCard() {
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge>V{packageJson.version}</Badge>
+            <Badge>V{currentWebVersion}</Badge>
             <AlertDialog onOpenChange={setOpenUpdateWeb} open={openUpdateWeb}>
               <AlertDialogTrigger asChild>
                 <Button
