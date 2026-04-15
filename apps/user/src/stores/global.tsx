@@ -118,7 +118,7 @@ export const useGlobalStore = create<GlobalStore>((set, get) => ({
   setUser: (user) => set({ user }),
   getUserInfo: async () => {
     try {
-      const { data } = await queryUserInfo();
+      const { data } = await queryUserInfo({ skipErrorHandler: true });
       set({ user: data.data });
     } catch (error) {
       console.error("Failed to refresh user:", error);
