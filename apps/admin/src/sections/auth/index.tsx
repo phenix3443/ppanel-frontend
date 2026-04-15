@@ -21,7 +21,7 @@ export default function Auth() {
 
   return (
     <main className="flex h-full min-h-screen items-center bg-muted/50 [&_canvas]:pointer-events-none">
-        <div className="flex size-full flex-auto flex-col justify-center lg:flex-row">
+      <div className="flex size-full flex-auto flex-col justify-center lg:flex-row">
         <div className="flex lg:pointer-events-none lg:w-1/2 lg:flex-auto">
           <div className="flex w-full flex-col items-center justify-center px-5 py-4 md:px-14 lg:py-14">
             <Link className="mb-0 flex flex-col items-center lg:mb-12" to="/">
