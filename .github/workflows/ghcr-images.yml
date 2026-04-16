@@ -20,6 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set build version
+        run: echo "PPANEL_WEB_VERSION=sha-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:

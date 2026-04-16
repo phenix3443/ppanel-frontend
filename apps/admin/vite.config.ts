@@ -1,23 +1,24 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath, URL } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import { resolveWebVersion } from "../../tools/resolve-web-version";
 
-// Plugin to generate version.lock file after build
+function resolveBuildVersion() {
+  const gitRoot = fileURLToPath(new URL("../../", import.meta.url));
+  return resolveWebVersion(gitRoot);
+}
+
 function versionLockPlugin(): Plugin {
   return {
     name: "version-lock",
     apply: "build",
     closeBundle() {
       const distDir = fileURLToPath(new URL("./dist", import.meta.url));
-      const rootPkgPath = fileURLToPath(
-        new URL("../../package.json", import.meta.url)
-      );
-      const rootPkg = JSON.parse(readFileSync(rootPkgPath, "utf-8"));
-      const version = rootPkg.version || "0.0.0";
+      const version = resolveBuildVersion();
 
       mkdirSync(distDir, { recursive: true });
       writeFileSync(`${distDir}/version.lock`, version);
@@ -26,13 +27,27 @@ function versionLockPlugin(): Plugin {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const webVersion = resolveBuildVersion();
+  // Dev server only: allow custom local domains such as Telepresence routes.
+  // Keep this env-driven so each developer can opt in without baking machine-specific hosts into source.
+  const allowedHosts = env.VITE_ALLOWED_HOSTS
+    ? env.VITE_ALLOWED_HOSTS.split(",")
+        .map((host) => host.trim())
+        .filter(Boolean)
+    : undefined;
+  const devtoolsPort = Number(env.VITE_DEVTOOLS_PORT || "42070");
 
   return {
-    base: "./",
+    // Vite dev server should serve modules from an absolute root path so
+    // Telepresence-hosted local domains can resolve lazy chunks correctly.
+    base: command === "serve" ? "/" : "./",
+    define: {
+      "import.meta.env.VITE_APP_VERSION": JSON.stringify(webVersion),
+    },
     plugins: [
-      devtools({ eventBusConfig: { port: 42_070 } }),
+      devtools({ eventBusConfig: { port: devtoolsPort } }),
       tanstackRouter({
         target: "react",
         autoCodeSplitting: true,
@@ -47,6 +62,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      allowedHosts,
       proxy: {
         "/api": {
           target: env.VITE_API_BASE_URL || "https://api.ppanel.dev",

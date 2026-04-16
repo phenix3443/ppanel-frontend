@@ -29,7 +29,11 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 async function getDeployedWebVersion() {
-  const response = await fetch(new URL("version.lock", window.location.href), {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_APP_VERSION || "-";
+  }
+
+  const response = await fetch(new URL("/version.lock", window.location.origin), {
     cache: "no-store",
   });
 
@@ -37,7 +41,23 @@ async function getDeployedWebVersion() {
     throw new Error(`Failed to load version.lock: ${response.status}`);
   }
 
-  return (await response.text()).trim();
+  const version = (await response.text()).trim();
+
+  // Guard against dev-server/ingress fallbacks returning index.html for a
+  // missing asset, which would otherwise be rendered as the version string.
+  if (!version || version.startsWith("<!DOCTYPE html") || version.startsWith("<html")) {
+    throw new Error("Invalid version.lock payload");
+  }
+
+  return version;
+}
+
+function formatVersionBadge(version?: string) {
+  if (!version || version === "-") {
+    return "-";
+  }
+
+  return /^[0-9]/.test(version) ? `V${version}` : version;
 }
 
 export default function SystemVersionCard() {
@@ -148,6 +168,8 @@ export default function SystemVersionCard() {
   const isUpdatingServer = updateServerMutation.isPending;
   const currentWebVersion =
     deployedWebVersion || webVersionInfo?.current_version || "-";
+  const currentServerVersion =
+    moduleConfig?.service_version || serverVersionInfo?.current_version || "1.0.0";
 
   return (
     <Card className="gap-0 p-3">
@@ -207,7 +229,7 @@ export default function SystemVersionCard() {
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge>V{currentWebVersion}</Badge>
+            <Badge>{formatVersionBadge(currentWebVersion)}</Badge>
             <AlertDialog onOpenChange={setOpenUpdateWeb} open={openUpdateWeb}>
               <AlertDialogTrigger asChild>
                 <Button
@@ -265,12 +287,7 @@ export default function SystemVersionCard() {
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge>
-              V
-              {moduleConfig?.service_version ||
-                serverVersionInfo?.current_version ||
-                "1.0.0"}
-            </Badge>
+            <Badge>{formatVersionBadge(currentServerVersion)}</Badge>
             <AlertDialog
               onOpenChange={setOpenUpdateServer}
               open={openUpdateServer}
