@@ -2,7 +2,7 @@ name: Build and Release
 
 on:
   push:
-    branches: [main, next, beta, develop]
+    branches: [main, dev]
     paths-ignore:
       - 'docs/**'
 
