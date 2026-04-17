@@ -5,7 +5,7 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
-import { resolveWebVersion } from "../../src/build/resolve-web-version";
+import { resolveWebVersion } from "../../tools/resolve-web-version";
 
 // Plugin to generate version metadata after build
 function versionMetadataPlugin(): Plugin {
@@ -14,7 +14,7 @@ function versionMetadataPlugin(): Plugin {
     apply: "build",
     closeBundle() {
       const distDir = fileURLToPath(new URL("./dist", import.meta.url));
-      const version = resolveWebVersion();
+      const version = resolveWebVersion(fileURLToPath(new URL("../..", import.meta.url)));
 
       mkdirSync(distDir, { recursive: true });
       writeFileSync(
@@ -28,7 +28,7 @@ function versionMetadataPlugin(): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const webVersion = resolveWebVersion();
+  const webVersion = resolveWebVersion(fileURLToPath(new URL("../..", import.meta.url)));
   const allowedHosts = env.VITE_ALLOWED_HOSTS
     ? env.VITE_ALLOWED_HOSTS.split(",")
         .map((host) => host.trim())
