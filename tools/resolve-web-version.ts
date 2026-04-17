@@ -16,17 +16,18 @@ export function resolveWebVersion(gitRoot: string) {
   }
 
   try {
-    const localTag = execSync(
-      "git tag --points-at HEAD --list 'v[0-9]*' | sort -V | tail -n 1",
-      {
-        cwd: gitRoot,
-        encoding: "utf-8",
-        stdio: ["ignore", "pipe", "ignore"],
-        shell: "/bin/zsh",
-      }
-    ).trim();
+    const localTag = execSync("git tag --points-at HEAD --list 'v[0-9]*'", {
+      cwd: gitRoot,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .split("\n")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }))
+      .at(-1);
 
-    if (localTag.match(RELEASE_TAG_PATTERN)) {
+    if (localTag?.match(RELEASE_TAG_PATTERN)) {
       return localTag;
     }
   } catch {
