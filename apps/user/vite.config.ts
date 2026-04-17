@@ -14,7 +14,9 @@ function versionMetadataPlugin(): Plugin {
     apply: "build",
     closeBundle() {
       const distDir = fileURLToPath(new URL("./dist", import.meta.url));
-      const version = resolveWebVersion();
+      const version = resolveWebVersion(
+        fileURLToPath(new URL("../..", import.meta.url))
+      );
       writeFileSync(
         `${distDir}/version.json`,
         JSON.stringify(version, null, 2)
