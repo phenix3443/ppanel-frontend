@@ -15,6 +15,16 @@ This repository uses a main-first task branch model.
 - `main` must only be updated by task branch pull requests.
 - The k3s prod environment deploys the latest `main`.
 
+## Pull request workflow
+- When changes need to be submitted, create pull requests instead of asking again for PR preference.
+- This repository has two remotes:
+- `origin` = `git@github.com:phenix3443/ppanel-frontend.git`
+- `upstream` = `git@github.com:perfect-panel/frontend.git`
+- By default, create two pull requests for the same task branch when submission is requested:
+- one PR from the task branch in `origin` to `origin/main`
+- one PR from the corresponding branch in `upstream` to `upstream/main`
+- If only one remote can be used because of permissions, branch availability, or an explicit user instruction, state that clearly when reporting the result.
+
 ## Worktree workflow
 ```bash
 git fetch origin
