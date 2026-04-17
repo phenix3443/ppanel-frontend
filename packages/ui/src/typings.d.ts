@@ -7,6 +7,12 @@ declare global {
     logout: () => void;
     i18n: typeof i18n;
   }
+
+  const __APP_GIT_VERSION__: {
+    commit: string;
+    tag: string | null;
+    display_version: string;
+  };
 }
 
 interface ImportMetaEnv {
