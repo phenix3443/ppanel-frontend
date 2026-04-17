@@ -5,21 +5,20 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
-import { resolveWebVersion } from "../../tools/resolve-web-version";
+import { resolveWebVersion } from "../../src/build/resolve-web-version";
 
-function resolveBuildVersion() {
-  const gitRoot = fileURLToPath(new URL("../../", import.meta.url));
-  return resolveWebVersion(gitRoot);
-}
-
-function versionLockPlugin(): Plugin {
+// Plugin to generate version metadata after build
+function versionMetadataPlugin(): Plugin {
   return {
-    name: "version-lock",
+    name: "version-metadata",
     apply: "build",
     closeBundle() {
       const distDir = fileURLToPath(new URL("./dist", import.meta.url));
-      const version = resolveBuildVersion();
-      writeFileSync(`${distDir}/version.lock`, version);
+      const version = resolveWebVersion();
+      writeFileSync(
+        `${distDir}/version.json`,
+        JSON.stringify(version, null, 2)
+      );
     },
   };
 }
@@ -27,17 +26,24 @@ function versionLockPlugin(): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const webVersion = resolveWebVersion();
   // Dev server only: allow custom local domains such as Telepresence routes.
   // Keep this env-driven so each developer can opt in without baking machine-specific hosts into source.
-  const allowedHosts = env.VITE_ALLOWED_HOSTS
-    ? env.VITE_ALLOWED_HOSTS.split(",")
-        .map((host) => host.trim())
-        .filter(Boolean)
-    : undefined;
+  const allowedHosts = [
+    ".home.arpa",
+    ...(env.VITE_ALLOWED_HOSTS
+      ? env.VITE_ALLOWED_HOSTS.split(",")
+          .map((host) => host.trim())
+          .filter(Boolean)
+      : []),
+  ];
   const devtoolsPort = Number(env.VITE_DEVTOOLS_PORT || "42069");
 
   return {
     base: "./",
+    define: {
+      __APP_GIT_VERSION__: JSON.stringify(webVersion),
+    },
     plugins: [
       devtools({ eventBusConfig: { port: devtoolsPort } }),
       tanstackRouter({
@@ -46,7 +52,7 @@ export default defineConfig(({ mode }) => {
       }),
       viteReact(),
       tailwindcss(),
-      versionLockPlugin(),
+      versionMetadataPlugin(),
     ],
     resolve: {
       alias: {
