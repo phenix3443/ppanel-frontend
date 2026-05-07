@@ -1,3 +1,3 @@
-FROM nginx:1.27-alpine
+FROM cgr.dev/chainguard/nginx:latest
 
 COPY apps/user/dist /usr/share/nginx/html
