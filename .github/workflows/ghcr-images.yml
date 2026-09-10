@@ -112,11 +112,16 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          # 【main-<时间戳> 是给 Flux 镜像自动化用的】既不可变又可排序。
+          # latest 和分支名会动（重启的 Pod 可能悄悄换镜像），sha- 不可排序
+          # （判断不出哪个更新），两者都不能做 ImagePolicy 的排序依据。
+          # 注意：下面是 YAML 块标量，里面写 # 不是注释而是字面内容。
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=tag
             type=sha,prefix=sha-
+            type=raw,value=main-{{date 'YYYYMMDDHHmmss'}},enable={{is_default_branch}}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
