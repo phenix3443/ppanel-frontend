@@ -40,9 +40,9 @@ import { ArrayInput } from "@workspace/ui/composed/dynamic-Inputs";
 import { EnhancedInput } from "@workspace/ui/composed/enhanced-input";
 import { Icon } from "@workspace/ui/composed/icon";
 import {
-  getNodeConfig,
-  updateNodeConfig,
-} from "@workspace/ui/services/admin/system";
+  getSystemNodeConfig as getNodeConfig,
+  putSystemNodeConfig as updateNodeConfig,
+} from "@workspace/ui/services/admin/admin";
 import { unitConversion } from "@workspace/ui/utils/unit-conversions";
 import { DicesIcon } from "lucide-react";
 import { uid } from "radash";
@@ -51,22 +51,17 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { z } from "zod";
-import { SS_CIPHERS } from "./form-schema";
+import {
+  normalizeOutboundConfig,
+  outboundConfigSchema,
+} from "./outbound-config";
+import { OutboundConfigInput } from "./outbound-config-input";
 
 const dnsConfigSchema = z.object({
   proto: z.string(), // z.enum(['tcp', 'udp', 'tls', 'https', 'quic']),
   address: z.string(),
+  server_name: z.string().optional(),
   domains: z.array(z.string()),
-});
-
-const outboundConfigSchema = z.object({
-  name: z.string(),
-  protocol: z.string(),
-  address: z.string(),
-  port: z.number(),
-  cipher: z.string().optional(),
-  password: z.string().optional(),
-  rules: z.array(z.string()).optional(),
 });
 
 const nodeConfigSchema = z.object({
@@ -131,7 +126,12 @@ export default function ServerConfig() {
   async function onSubmit(values: NodeConfigFormData) {
     setSaving(true);
     try {
-      await updateNodeConfig(values as API.NodeConfig);
+      await updateNodeConfig({
+        ...values,
+        outbound: (values.outbound || []).map((item) =>
+          normalizeOutboundConfig(item)
+        ),
+      } as API.NodeConfig);
       toast.success(t("server_config.saveSuccess", "Saved successfully"));
       await refetchCfg();
       setOpen(false);
@@ -440,6 +440,14 @@ export default function ServerConfig() {
                                 placeholder: "8.8.8.8:53",
                               },
                               {
+                                name: "server_name",
+                                type: "text",
+                                placeholder: t(
+                                  "server_config.fields.dns_server_name_placeholder",
+                                  "TLS server name (optional)"
+                                ),
+                              },
+                              {
                                 name: "domains",
                                 type: "textarea",
                                 className: "col-span-2",
@@ -453,6 +461,7 @@ export default function ServerConfig() {
                               const converted = values.map((item: any) => ({
                                 proto: item.proto,
                                 address: item.address,
+                                server_name: item.server_name || "",
                                 domains:
                                   typeof item.domains === "string"
                                     ? item.domains
@@ -483,113 +492,15 @@ export default function ServerConfig() {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <ArrayInput
-                            className="grid grid-cols-2 gap-2"
-                            fields={[
-                              {
-                                name: "name",
-                                type: "text",
-                                className: "col-span-2",
-                                placeholder: t(
-                                  "server_config.fields.outbound_name_placeholder",
-                                  "Configuration name"
-                                ),
-                              },
-                              {
-                                name: "protocol",
-                                type: "select",
-                                placeholder: t(
-                                  "server_config.fields.outbound_protocol_placeholder",
-                                  "Select protocol"
-                                ),
-                                options: [
-                                  { label: "HTTP", value: "http" },
-                                  { label: "SOCKS", value: "socks" },
-                                  {
-                                    label: "Shadowsocks",
-                                    value: "shadowsocks",
-                                  },
-                                  { label: "Brook", value: "brook" },
-                                  { label: "Snell", value: "snell" },
-                                  { label: "VMess", value: "vmess" },
-                                  { label: "VLESS", value: "vless" },
-                                  { label: "Trojan", value: "trojan" },
-                                  { label: "WireGuard", value: "wireguard" },
-                                  { label: "Hysteria", value: "hysteria" },
-                                  { label: "TUIC", value: "tuic" },
-                                  { label: "AnyTLS", value: "anytls" },
-                                  { label: "Naive", value: "naive" },
-                                  { label: "Direct", value: "direct" },
-                                  { label: "Reject", value: "reject" },
-                                ],
-                              },
-                              {
-                                name: "cipher",
-                                type: "select",
-                                options: SS_CIPHERS.map((cipher) => ({
-                                  label: cipher,
-                                  value: cipher,
-                                })),
-                                visible: (item: Record<string, unknown>) =>
-                                  item.protocol === "shadowsocks",
-                              },
-                              {
-                                name: "address",
-                                type: "text",
-                                placeholder: t(
-                                  "server_config.fields.outbound_address_placeholder",
-                                  "Server address"
-                                ),
-                              },
-                              {
-                                name: "port",
-                                type: "number",
-                                placeholder: t(
-                                  "server_config.fields.outbound_port_placeholder",
-                                  "Port number"
-                                ),
-                              },
-                              {
-                                name: "password",
-                                type: "text",
-                                placeholder: t(
-                                  "server_config.fields.outbound_password_placeholder",
-                                  "Password (optional)"
-                                ),
-                              },
-                              {
-                                name: "rules",
-                                type: "textarea",
-                                className: "col-span-2",
-                                placeholder: t(
-                                  "server_config.fields.outbound_rules_placeholder",
-                                  "One rule per line"
-                                ),
-                              },
-                            ]}
+                          <OutboundConfigInput
                             onChange={(values) => {
-                              const converted = values.map((item: any) => ({
-                                name: item.name,
-                                protocol: item.protocol,
-                                address: item.address,
-                                port: item.port,
-                                cipher: item.cipher,
-                                password: item.password,
-                                rules:
-                                  typeof item.rules === "string"
-                                    ? item.rules
-                                        .split("\n")
-                                        .map((r: string) => r.trim())
-                                    : item.rules || [],
-                              }));
-                              field.onChange(converted);
+                              field.onChange(
+                                values.map((item) =>
+                                  normalizeOutboundConfig(item)
+                                )
+                              );
                             }}
-                            value={(field.value || []).map((item) => ({
-                              ...item,
-                              rules: Array.isArray(item.rules)
-                                ? item.rules.join("\n")
-                                : "",
-                            }))}
+                            value={field.value || []}
                           />
                         </FormControl>
                         <FormMessage />

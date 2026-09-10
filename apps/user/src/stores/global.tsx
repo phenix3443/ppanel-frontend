@@ -1,41 +1,25 @@
-import { queryUserInfo } from "@workspace/ui/services/user/user";
+import { getV1PublicUserInfo as queryUserInfo } from "@workspace/ui/services/user/user";
 import { isBrowser } from "@workspace/ui/utils/index";
 import { create } from "zustand";
+import { buildUserSubscribeUrls } from "@/utils/subscription";
+
+export { extractDomain } from "@/utils/subscription";
 
 export interface GlobalStore {
   common: API.GetGlobalConfigResponse;
   commonReady: boolean;
+  commonError?: string;
   user?: API.User;
+  isLoadingCommon: boolean;
+  isLoadingUser: boolean;
   setCommon: (common: Partial<API.GetGlobalConfigResponse>) => void;
   setCommonReady: (ready: boolean) => void;
+  setCommonError: (error: string) => void;
   setUser: (user?: API.User) => void;
   getUserInfo: () => Promise<void>;
+  clearUserLoading: () => void;
   getUserSubscribe: (short: string, token: string, type?: string) => string[];
   getAppSubLink: (url: string, schema?: string) => string;
-}
-
-/**
- * Extracts the full domain or root domain from a URL.
- *
- * @param url - The URL to extract the domain from.
- * @param extractRoot - If true, extracts the root domain (e.g., example.com). If false, extracts the full domain (e.g., sub.example.com).
- * @returns The extracted domain or root domain, or null if the URL is invalid.
- */
-export function extractDomain(url: string, extractRoot = true): string | null {
-  try {
-    const { hostname } = new URL(url);
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
-      return hostname;
-    }
-    const domainParts = hostname.split(".").filter(Boolean);
-    if (extractRoot && domainParts.length > 2) {
-      return domainParts.slice(-2).join(".");
-    }
-    return hostname;
-  } catch (error) {
-    console.error("Invalid URL:", error);
-    return null;
-  }
 }
 
 export const useGlobalStore = create<GlobalStore>((set, get) => ({
@@ -84,6 +68,7 @@ export const useGlobalStore = create<GlobalStore>((set, get) => ({
       forced_invite: false,
       referral_percentage: 0,
       only_first_purchase: false,
+      withdrawal_method: "",
     },
     currency: {
       currency_unit: "USD",
@@ -96,6 +81,9 @@ export const useGlobalStore = create<GlobalStore>((set, get) => ({
       pan_domain: false,
       user_agent_limit: false,
       user_agent_list: "",
+      profile_update_interval: 0,
+      profile_web_page_url: "",
+      show_tutorial: false,
     },
     verify_code: {
       verify_code_expire_time: 5,
@@ -106,42 +94,44 @@ export const useGlobalStore = create<GlobalStore>((set, get) => ({
     web_ad: false,
   },
   commonReady: false,
+  commonError: undefined,
   user: undefined,
+  isLoadingCommon: true,
+  isLoadingUser: true,
   setCommon: (common) =>
     set((state) => ({
       common: {
         ...state.common,
         ...common,
       },
+      commonError: undefined,
+      isLoadingCommon: false,
     })),
   setCommonReady: (commonReady) => set({ commonReady }),
+  setCommonError: (commonError) => set({ commonError, isLoadingCommon: false }),
   setUser: (user) => set({ user }),
   getUserInfo: async () => {
+    set({ isLoadingUser: true });
     try {
       const { data } = await queryUserInfo({ skipErrorHandler: true });
       set({ user: data.data });
     } catch (error) {
       console.error("Failed to refresh user:", error);
+    } finally {
+      set({ isLoadingUser: false });
     }
   },
-  getUserSubscribe: (short: string, token: string, type?: string) => {
-    const { pan_domain, subscribe_domain, subscribe_path } =
-      get().common.subscribe || {};
-    const domains = subscribe_domain
-      ? subscribe_domain.split("\n")
-      : [extractDomain(window.location.origin, pan_domain)];
-
-    return domains.map((domain) => {
-      if (pan_domain) {
-        if (type)
-          return `https://${short}.${type}.${domain}${subscribe_path}?token=${token}&type=${type}`;
-        return `https://${short}.${domain}${subscribe_path}?token=${token}`;
-      }
-      if (type)
-        return `https://${domain}${subscribe_path}?token=${token}&type=${type}`;
-      return `https://${domain}${subscribe_path}?token=${token}`;
-    });
+  clearUserLoading: () => {
+    set({ isLoadingUser: false });
   },
+  getUserSubscribe: (short: string, token: string, type?: string) =>
+    buildUserSubscribeUrls({
+      origin: window.location.origin,
+      short,
+      subscribe: get().common.subscribe || {},
+      token,
+      type,
+    }),
   getAppSubLink: (url: string, schema?: string) => {
     const name = get().common?.site?.site_name || "";
 

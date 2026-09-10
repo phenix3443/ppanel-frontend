@@ -8,7 +8,6 @@ PPanel 支持多种部署方式，以适应不同的需求和环境。选择最�
 
 最简单、最可靠的部署方式。Docker 确保环境一致性并简化更新流程。
 
-- **[Docker Run](/zh/guide/installation/docker-run)** - 单命令快速部署
 - **[Docker Compose](/zh/guide/installation/docker-compose)** - 生产环境推荐，更好的管理方式
 
 ### 传统部署
@@ -17,7 +16,6 @@ PPanel 支持多种部署方式，以适应不同的需求和环境。选择最�
 
 ### 高级部署
 
-- **[Kubernetes](/zh/guide/installation/kubernetes)** - 在 Kubernetes 集群中部署 PPanel 以实现高可用
 - **[源码部署](/zh/guide/installation/from-source)** - 从源码构建并运行 PPanel
 
 ## 系统要求

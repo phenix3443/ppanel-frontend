@@ -3,13 +3,13 @@ export const protocols = [
   "vmess",
   "vless",
   "trojan",
-  "hysteria",
+  "hysteria2",
   "tuic",
   "anytls",
-  "socks",
   "naive",
-  "http",
   "mieru",
+  "shadowsocksr",
+  "snell",
 ] as const;
 
 // Global label map for display; fallback to raw value if missing
@@ -17,6 +17,9 @@ export const LABELS = {
   // transport
   tcp: "TCP",
   udp: "UDP",
+  both: "TCP + UDP",
+  "tcp,udp": "TCP + UDP",
+  ws: "WebSocket",
   websocket: "WebSocket",
   grpc: "gRPC",
   mkcp: "mKCP",
@@ -39,6 +42,32 @@ export const LABELS = {
   low: "Low",
   middle: "Middle",
   high: "High",
+  h2mux: "H2Mux",
+  smux: "SMux",
+  yamux: "YAMux",
+  MULTIPLEXING_OFF: "Off",
+  MULTIPLEXING_LOW: "Low",
+  MULTIPLEXING_MIDDLE: "Middle",
+  MULTIPLEXING_HIGH: "High",
+  default: "Default",
+  unshaped: "Unshaped",
+  "unsafe-raw": "Unsafe Raw",
+  // ssr protocol
+  auth_aes128_md5: "Auth AES128 MD5",
+  auth_aes128_sha1: "Auth AES128 SHA1",
+  auth_chain_a: "Auth Chain A",
+  auth_chain_b: "Auth Chain B",
+  auth_chain_c: "Auth Chain C",
+  auth_chain_d: "Auth Chain D",
+  auth_chain_e: "Auth Chain E",
+  auth_chain_f: "Auth Chain F",
+  // ssr obfs
+  plain: "Plain",
+  http_simple: "HTTP Simple",
+  http_post: "HTTP POST",
+  "tls1.0_session_auth": "TLS 1.0 Session Auth",
+  "tls1.2_ticket_auth": "TLS 1.2 Ticket Auth",
+  "tls1.2_ticket_fastauth": "TLS 1.2 Ticket FastAuth",
 } as const;
 
 // Flat arrays for enum-like sets
@@ -47,28 +76,72 @@ export const SS_CIPHERS = [
   "aes-192-gcm",
   "aes-256-gcm",
   "chacha20-ietf-poly1305",
+  "xchacha20-ietf-poly1305",
   "2022-blake3-aes-128-gcm",
   "2022-blake3-aes-256-gcm",
-  "2022-blake3-chacha20-poly1305",
+] as const;
+
+export const SHADOWSOCKS_PLUGINS = [
+  "none",
+  "obfs",
+  "v2ray-plugin",
+  "gost-plugin",
+  "shadow-tls",
+  "restls",
+  "kcptun",
+] as const;
+
+export const SSR_CIPHERS = [
+  "none",
+  "aes-128-ctr",
+  "aes-192-ctr",
+  "aes-256-ctr",
+  "aes-128-cfb",
+  "aes-192-cfb",
+  "aes-256-cfb",
+  "rc4-md5",
+  "chacha20",
+  "chacha20-ietf",
+] as const;
+
+// Only the protocols that carry a wire UID: origin and the legacy verify/auth
+// families cap the node at exactly one active user.
+export const SSR_PROTOCOLS = [
+  "auth_aes128_md5",
+  "auth_aes128_sha1",
+  "auth_chain_a",
+  "auth_chain_b",
+  "auth_chain_c",
+  "auth_chain_d",
+  "auth_chain_e",
+  "auth_chain_f",
+] as const;
+
+export const SSR_OBFS = [
+  "plain",
+  "http_simple",
+  "http_post",
+  "tls1.0_session_auth",
+  "tls1.2_ticket_auth",
+  "tls1.2_ticket_fastauth",
 ] as const;
 
 export const TRANSPORTS = {
-  vmess: ["tcp", "websocket", "grpc"] as const,
-  vless: ["tcp", "websocket", "grpc", "mkcp", "httpupgrade", "xhttp"] as const,
-  trojan: ["tcp", "websocket", "grpc"] as const,
+  vmess: ["tcp", "ws", "httpupgrade", "grpc", "xhttp"] as const,
+  vless: ["tcp", "ws", "httpupgrade", "grpc", "xhttp"] as const,
+  trojan: ["tcp", "ws", "httpupgrade", "grpc", "xhttp"] as const,
   mieru: ["tcp", "udp"] as const,
+  shadowsocksr: ["both", "tcp", "udp"] as const,
 } as const;
 
 export const SECURITY = {
-  shadowsocks: ["none", "http", "tls"] as const,
-  vmess: ["none", "tls"] as const,
+  vmess: ["none", "tls", "reality"] as const,
   vless: ["none", "tls", "reality"] as const,
-  trojan: ["tls"] as const,
-  hysteria: ["tls"] as const,
+  trojan: ["tls", "reality"] as const,
+  hysteria2: ["tls"] as const,
   tuic: ["tls"] as const,
-  anytls: ["none", "tls", "reality"] as const,
-  naive: ["none", "tls"] as const,
-  http: ["none", "tls"] as const,
+  anytls: ["tls", "reality"] as const,
+  naive: ["tls"] as const,
 } as const;
 
 export const FLOWS = {
@@ -77,6 +150,15 @@ export const FLOWS = {
 
 export const TUIC_UDP_RELAY_MODES = ["native", "quic"] as const;
 export const TUIC_CONGESTION = ["bbr", "cubic", "new_reno"] as const;
+export const NAIVE_CONGESTION = [
+  "bbr",
+  "bbr_standard",
+  "bbr2",
+  "bbr2_variant",
+  "cubic",
+  "reno",
+] as const;
+export const ALPN_VALUES = ["h2", "http/1.1", "h3"] as const;
 export const XHTTP_MODES = [
   "auto",
   "packet-up",
@@ -97,9 +179,19 @@ export const FINGERPRINTS = [
   "qq",
 ] as const;
 
-export const CERT_MODES = ["none", "http", "dns", "self"] as const;
+export const CERT_MODES = ["none", "file", "self", "http", "dns"] as const;
 
-export const multiplexLevels = ["none", "low", "middle", "high"] as const;
+export const multiplexLevels = ["none", "h2mux", "smux", "yamux"] as const;
+export const MIERU_MULTIPLEX = [
+  "MULTIPLEXING_OFF",
+  "MULTIPLEXING_LOW",
+  "MULTIPLEXING_MIDDLE",
+  "MULTIPLEXING_HIGH",
+] as const;
+
+export const SNELL_VERSIONS = ["5", "6"] as const;
+export const SNELL_OBFS = ["none", "http", "tls"] as const;
+export const SNELL_V6_MODES = ["default", "unshaped", "unsafe-raw"] as const;
 
 export function getLabel(value: string): string {
   const label = (LABELS as Record<string, string>)[value];

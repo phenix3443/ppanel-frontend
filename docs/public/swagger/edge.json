@@ -1,0 +1,233 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "HTTP API for PPanel's Hertz server. Application errors are returned in the response code and message fields.",
+        "title": "PPanel API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/edge/v1/manifest": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "edge"
+                ],
+                "summary": "Get Edge subscription manifest",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subscription token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "PPanel Edge HMAC credential",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "One-time UUID bound into the HMAC",
+                        "name": "X-Request-ID",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.EdgeManifestResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.EdgeManifestProxy": {
+            "type": "object",
+            "properties": {
+                "cipher": {
+                    "type": "string"
+                },
+                "flow": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "protocol": {
+                    "type": "string"
+                },
+                "server": {
+                    "type": "string"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tls": {
+                    "$ref": "#/definitions/dto.EdgeManifestTLS"
+                },
+                "transport": {
+                    "$ref": "#/definitions/dto.EdgeManifestTransport"
+                },
+                "udp": {
+                    "type": "boolean"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EdgeManifestResponse": {
+            "type": "object",
+            "properties": {
+                "generated_at": {
+                    "type": "string"
+                },
+                "notices": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "proxies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.EdgeManifestProxy"
+                    }
+                },
+                "revision": {
+                    "type": "string"
+                },
+                "schema_version": {
+                    "type": "string"
+                },
+                "subscription": {
+                    "$ref": "#/definitions/dto.EdgeManifestSubscription"
+                }
+            }
+        },
+        "dto.EdgeManifestSubscription": {
+            "type": "object",
+            "properties": {
+                "download": {
+                    "type": "integer"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "traffic_limit": {
+                    "type": "integer"
+                },
+                "update_interval_hours": {
+                    "type": "integer"
+                },
+                "upload": {
+                    "type": "integer"
+                },
+                "web_page_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EdgeManifestTLS": {
+            "type": "object",
+            "properties": {
+                "alpn": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "insecure": {
+                    "type": "boolean"
+                },
+                "server_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EdgeManifestTransport": {
+            "type": "object",
+            "properties": {
+                "host": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "NodeSecret": {
+            "type": "apiKey",
+            "name": "secret_key",
+            "in": "query"
+        },
+        "TelegramSecret": {
+            "type": "apiKey",
+            "name": "X-Telegram-Bot-Api-Secret-Token",
+            "in": "header"
+        }
+    }
+}

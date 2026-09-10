@@ -32,44 +32,17 @@ import { EnhancedInput } from "@workspace/ui/composed/enhanced-input";
 import { Icon } from "@workspace/ui/composed/icon";
 import {
   getAuthMethodConfig,
-  testEmailSend,
-  updateAuthMethodConfig,
-} from "@workspace/ui/services/admin/authMethod";
+  postAuthMethodTestEmailSend as testEmailSend,
+  putAuthMethodConfig as updateAuthMethodConfig,
+} from "@workspace/ui/services/admin/admin";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const emailSettingsSchema = z.object({
-  id: z.number(),
-  method: z.string(),
-  enabled: z.boolean(),
-  config: z
-    .object({
-      enable_verify: z.boolean(),
-      enable_domain_suffix: z.boolean(),
-      domain_suffix_list: z.string().optional(),
-      verify_email_template: z.string().optional(),
-      expiration_email_template: z.string().optional(),
-      maintenance_email_template: z.string().optional(),
-      traffic_exceed_email_template: z.string().optional(),
-      platform: z.string(),
-      platform_config: z
-        .object({
-          host: z.string().optional(),
-          port: z.number().optional(),
-          ssl: z.boolean(),
-          user: z.string().optional(),
-          pass: z.string().optional(),
-          from: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-});
-
-type EmailSettingsFormData = z.infer<typeof emailSettingsSchema>;
+import {
+  type EmailSettingsFormData,
+  emailSettingsSchema,
+} from "./email-settings-schema";
 
 export default function EmailSettingsForm() {
   const { t } = useTranslation("auth-control");
@@ -98,9 +71,13 @@ export default function EmailSettingsForm() {
         enable_verify: false,
         enable_domain_suffix: false,
         domain_suffix_list: "",
+        verify_email_subject: "",
         verify_email_template: "",
+        expiration_email_subject: "",
         expiration_email_template: "",
+        maintenance_email_subject: "",
         maintenance_email_template: "",
+        traffic_exceed_email_subject: "",
         traffic_exceed_email_template: "",
         platform: "smtp",
         platform_config: {
@@ -110,6 +87,7 @@ export default function EmailSettingsForm() {
           user: "",
           pass: "",
           from: "",
+          reply_to: "",
         },
       },
     },
@@ -484,6 +462,35 @@ export default function EmailSettingsForm() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="config.platform_config.reply_to"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t("email.replyToAddress", "Reply-To Address")}
+                        </FormLabel>
+                        <FormControl>
+                          <EnhancedInput
+                            onValueChange={field.onChange}
+                            placeholder={t(
+                              "email.inputPlaceholder",
+                              "Please enter"
+                            )}
+                            value={field.value}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            "email.replyToAddressDescription",
+                            "Optional. Where user replies go. Keep the From address on a verified/aligned domain (SPF/DKIM) for deliverability and put your real reply inbox here."
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="space-y-2 border-t pt-4">
                     <FormLabel>
                       {t("email.sendTestEmail", "Send Test Email")}
@@ -525,6 +532,37 @@ export default function EmailSettingsForm() {
                 </TabsContent>
 
                 <TabsContent className="space-y-2" value="verify">
+                  <FormField
+                    control={form.control}
+                    name="config.verify_email_subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t(
+                            "email.verifyEmailSubject",
+                            "Verify Email Subject"
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <EnhancedInput
+                            onValueChange={field.onChange}
+                            placeholder={t(
+                              "email.inputPlaceholder",
+                              "Please enter"
+                            )}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            "email.emailSubjectDescription",
+                            "Supports the same template variables as the email body"
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="config.verify_email_template"
@@ -631,6 +669,37 @@ export default function EmailSettingsForm() {
                 <TabsContent className="space-y-2" value="expiration">
                   <FormField
                     control={form.control}
+                    name="config.expiration_email_subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t(
+                            "email.expirationEmailSubject",
+                            "Expiration Email Subject"
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <EnhancedInput
+                            onValueChange={field.onChange}
+                            placeholder={t(
+                              "email.inputPlaceholder",
+                              "Please enter"
+                            )}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            "email.emailSubjectDescription",
+                            "Supports the same template variables as the email body"
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="config.expiration_email_template"
                     render={({ field }) => (
                       <FormItem>
@@ -700,6 +769,37 @@ export default function EmailSettingsForm() {
                 </TabsContent>
 
                 <TabsContent className="space-y-2" value="maintenance">
+                  <FormField
+                    control={form.control}
+                    name="config.maintenance_email_subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t(
+                            "email.maintenanceEmailSubject",
+                            "Maintenance Email Subject"
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <EnhancedInput
+                            onValueChange={field.onChange}
+                            placeholder={t(
+                              "email.inputPlaceholder",
+                              "Please enter"
+                            )}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            "email.emailSubjectDescription",
+                            "Supports the same template variables as the email body"
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="config.maintenance_email_template"
@@ -782,6 +882,37 @@ export default function EmailSettingsForm() {
                 </TabsContent>
 
                 <TabsContent className="space-y-2" value="traffic">
+                  <FormField
+                    control={form.control}
+                    name="config.traffic_exceed_email_subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t(
+                            "email.trafficExceedEmailSubject",
+                            "Traffic Exceed Email Subject"
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <EnhancedInput
+                            onValueChange={field.onChange}
+                            placeholder={t(
+                              "email.inputPlaceholder",
+                              "Please enter"
+                            )}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            "email.emailSubjectDescription",
+                            "Supports the same template variables as the email body"
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="config.traffic_exceed_email_template"

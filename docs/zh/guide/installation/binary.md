@@ -4,567 +4,308 @@
 
 ## 前置条件
 
-- **操作系统**: Linux (Ubuntu 20.04+, Debian 10+, CentOS 8+)
+- **操作系统**: Debian 13 (trixie)。本文所有软件源均针对 `trixie`，其他发行版请自行替换代号
 - **架构**: amd64 (x86_64) 或 arm64
 - **权限**: Root 或 sudo 访问权限
 - **依赖**: 无（二进制文件静态编译）
 
-## 下载二进制文件
+#### 安装前的准备
+```bash
+# 更新系统
+apt update && apt upgrade -y
 
-### 步骤 1: 检查系统架构
+# 安装基础工具
+apt install -y curl wget git unzip apt-transport-https ca-certificates gnupg lsb-release sudo vim
+
+# 设置时区
+timedatectl set-timezone Asia/Shanghai
+
+```
+## 步骤 1：安装 Nginx
+```bash
+# 添加 Nginx 官方仓库
+curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+  | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+
+echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+  http://nginx.org/packages/mainline/debian trixie nginx" \
+  | tee /etc/apt/sources.list.d/nginx.list
+
+# 设置仓库优先级
+echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+  | tee /etc/apt/preferences.d/99nginx
+
+# 安装 Nginx
+apt update && apt install -y nginx
+
+# 修改用户为 www-data
+sed -i 's/^user.*/user www-data;/' /etc/nginx/nginx.conf
+
+# 启动服务
+systemctl start nginx && systemctl enable nginx
+```
+ <!-- more --> 
+
+## 步骤 2：安装 Redis
 
 ```bash
-# 查看系统架构
-uname -m
-# 输出: x86_64 (amd64) 或 aarch64 (arm64)
+# 添加 Redis 仓库
+curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] \
+  https://packages.redis.io/deb trixie main" | tee /etc/apt/sources.list.d/redis.list
+
+# 安装 Redis
+apt update && apt install -y redis
+
+# 配置 Redis
+sed -i 's/^# bind 127.0.0.1 ::1/bind 127.0.0.1 ::1/' /etc/redis/redis.conf
+sed -i 's/^# maxmemory <bytes>/maxmemory 256mb/' /etc/redis/redis.conf
+sed -i 's/^# maxmemory-policy noeviction/maxmemory-policy allkeys-lru/' /etc/redis/redis.conf
+
+# 启动服务
+systemctl restart redis-server && systemctl enable redis-server
 ```
 
-### 步骤 2: 下载最新版本
+## 步骤 3：安装 PostgreSQL
 
-访问 [GitHub Releases](https://github.com/perfect-panel/ppanel/releases) 页面或直接下载：
+采用 PostgreSQL 官方 Apt 仓库（PGDG），详见[官方文档](https://www.postgresql.org/download/linux/debian/)。
 
-::: tip 安装目录
-你可以将 PPanel 安装在任意目录，本文档使用 `/opt/ppanel` 作为示例。如果选择其他目录，请相应调整后续命令中的路径。
+```bash
+# 添加官方仓库（自动方式，脚本会识别当前发行版代号）
+apt install -y postgresql-common
+/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+
+# 安装 PostgreSQL
+apt install -y postgresql-18
+
+# 启动服务
+systemctl start postgresql && systemctl enable postgresql
+```
+
+::: details 手动添加仓库（自动脚本不可用时）
+```bash
+apt install -y curl ca-certificates
+install -d /usr/share/postgresql-common/pgdg
+curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail \
+  https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+cat > /etc/apt/sources.list.d/pgdg.sources <<EOF
+Types: deb
+URIs: https://apt.postgresql.org/pub/repos/apt
+Suites: trixie-pgdg
+Components: main
+Signed-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+EOF
+
+apt update && apt install -y postgresql-18
+```
 :::
 
-```bash
-# 创建安装目录（可以自定义路径）
-sudo mkdir -p /opt/ppanel
-cd /opt/ppanel
-
-# 下载 Linux amd64 版本
-wget https://github.com/perfect-panel/ppanel/releases/latest/download/gateway-linux-amd64.tar.gz
-
-# 或下载 Linux arm64 版本
-# wget https://github.com/perfect-panel/ppanel/releases/latest/download/gateway-linux-arm64.tar.gz
-
-# 或下载 macOS amd64 版本
-# wget https://github.com/perfect-panel/ppanel/releases/latest/download/gateway-darwin-amd64.tar.gz
-
-# 或下载 macOS arm64 版本 (Apple Silicon)
-# wget https://github.com/perfect-panel/ppanel/releases/latest/download/gateway-darwin-arm64.tar.gz
-
-# 解压
-tar -xzf gateway-linux-amd64.tar.gz
-
-# 验证解压的文件
-ls -la
-```
-
-预期的文件结构：
-```
-/opt/ppanel/
-├── gateway          # 网关可执行文件
-└── etc/             # 配置目录
-    └── ppanel.yaml  # 配置文件
-```
-
-## 配置
-
-### 步骤 1: 准备配置
+### 创建数据库
 
 ```bash
-# 编辑配置
-sudo nano /opt/ppanel/etc/ppanel.yaml
+# 生成安全密码
+DB_PASSWORD=$(openssl rand -base64 16)
+echo "请牢记数据库密码！！！ 数据库密码：$DB_PASSWORD"
+
+# 创建专用角色与数据库（避免直接使用超级用户 postgres）
+sudo -u postgres psql <<EOF
+CREATE ROLE ppanel WITH LOGIN PASSWORD '$DB_PASSWORD';
+CREATE DATABASE ppanel OWNER ppanel ENCODING 'UTF8';
+EOF
 ```
 
-**配置示例:**
-
-::: tip 相对路径
-配置中的路径（如 `Path`、`logs` 等）支持相对路径。相对路径是相对于程序工作目录（WorkingDirectory）的，在 systemd 服务中即 `/opt/ppanel`。
+::: warning 请在同一个终端会话中继续执行步骤 5
+`$DB_PASSWORD` 是 shell 变量，断开 SSH 或新开窗口后会丢失，步骤 5 写入配置文件时就会得到空密码。若已丢失，重新执行上面的 `ALTER ROLE ppanel WITH PASSWORD '新密码';` 设置一个已知密码即可。
 :::
 
-```yaml
-Host: 0.0.0.0
+## 步骤 4：配置 Nginx
+```bash
+# 填入你的域名，后续的站点配置与证书申请都会用到
+domain=your-domain.com
+
+# 创建配置目录
+mkdir -p /etc/nginx/conf.d
+
+# 创建站点配置
+cat > /etc/nginx/conf.d/ppanel.conf <<EOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $domain;
+
+    location / {
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header REMOTE-HOST \$remote_addr;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_http_version 1.1;
+
+        add_header X-Cache \$upstream_cache_status;
+
+        proxy_pass http://127.0.0.1:8080;
+    }
+
+    location ~* \.(gif|png|jpg|css|js|woff|woff2)$ {
+        expires 30d;
+        add_header Cache-Control public;
+    }
+}
+EOF
+
+# 测试配置
+nginx -t
+
+# 重载 Nginx
+systemctl reload nginx
+```
+为了保护用户数据安全，强烈建议配置 HTTPS：
+
+```bash
+# 安装 Certbot
+apt install -y certbot python3-certbot-nginx
+
+# 获取证书
+certbot --nginx -d $domain --non-interactive --agree-tos -m admin@$domain
+```
+
+## 步骤 5：安装ppanel-server
+
+确定系统架构，并下载对应的二进制文件
+
+下载地址：`https://github.com/perfect-panel/backend/releases`
+
+示例说明：系统：Debian amd64，用户：root，当前目录：/root
+
+- 下载
+
+```shell
+wget -O ppanel-server-linux-amd64.tar.gz \
+  https://github.com/perfect-panel/backend/releases/latest/download/ppanel-server-linux-amd64.tar.gz
+
+```
+
+- 解压
+
+```shell
+tar -zxvf ppanel-server-linux-amd64.tar.gz
+```
+
+- 移动
+
+```shell
+sudo mv ppanel-server /usr/local/bin/ppanel-server
+sudo mkdir -p /usr/local/etc/ppanel
+sudo mv ./etc/ppanel.yaml /usr/local/etc/ppanel/
+```
+
+- 赋予二进制文件执行权限
+
+```shell
+sudo chmod +x /usr/local/bin/ppanel-server
+```
+
+- 修改 ppanel.yaml 配置文件
+```shell
+AccessSecret=$(openssl rand -base64 16)
+cat > /usr/local/etc/ppanel/ppanel.yaml <<EOF
+Host: 127.0.0.1
 Port: 8080
-TLS:
-    Enable: false
-    CertFile: ""
-    KeyFile: ""
 Debug: false
 
-Static:
-  Admin:
-    Enabled: true
-    Prefix: /admin
-    Path: ./static/admin
-  User:
-    Enabled: true
-    Prefix: /
-    Path: ./static/user
-
 JwtAuth:
-    AccessSecret: your-secret-key-change-this
-    AccessExpire: 604800
+  AccessSecret: $AccessSecret
+  AccessExpire: 604800
 
 Logger:
-    ServiceName: ApiService
-    Mode: console
-    Encoding: plain
-    TimeFormat: "2006-01-02 15:04:05.000"
-    Path: logs
-    Level: info
-    MaxContentLength: 0
-    Compress: false
-    Stat: true
-    KeepDays: 0
-    StackCooldownMillis: 100
-    MaxBackups: 0
-    MaxSize: 0
-    Rotation: daily
-    FileTimeFormat: 2006-01-02T15:04:05.000Z07:00
+  FilePath: /var/log/ppanel/ppanel.log
+  MaxSize: 50
+  MaxBackup: 3
+  MaxAge: 30
+  Compress: true
+  Level: info
 
-MySQL:
-    Addr: localhost:3306
-    Username: your-username
-    Password: your-password
-    Dbname: ppanel
-    Config: charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
-    MaxIdleConns: 10
-    MaxOpenConns: 10
-    SlowThreshold: 1000
+Database:
+  Driver: postgres
+  Addr: 127.0.0.1:5432
+  Username: ppanel
+  Password: $DB_PASSWORD
+  Dbname: ppanel
+  Config: sslmode=disable&TimeZone=Asia%2FShanghai
+  MaxIdleConns: 10
+  MaxOpenConns: 100
+  SlowThreshold: 1000
 
 Redis:
-    Host: localhost:6379
-    Pass: your-redis-password
-    DB: 0
+  Host: 127.0.0.1:6379
+  Pass: ''
+  DB: 0
+
+Administrator:
+  Email: admin@ppanel.dev
+  Password: password
+EOF
 ```
 
-::: warning 必需配置
-**MySQL 和 Redis 是必需的。** 部署前请配置以下项：
-- `JwtAuth.AccessSecret` - 使用强随机密钥（必需）
-- `MySQL.*` - 配置你的 MySQL 数据库连接（必需）
-- `Redis.*` - 配置你的 Redis 连接（必需）
-:::
+- 创建日志目录
 
-### 步骤 2: 创建必要的目录
-
-```bash
-# 创建数据和日志目录
-sudo mkdir -p /opt/ppanel/data
-sudo mkdir -p /opt/ppanel/logs
-sudo mkdir -p /opt/ppanel/static
-
-# 设置适当的权限
-sudo chmod 755 /opt/ppanel
-sudo chmod 700 /opt/ppanel/data
-sudo chmod 755 /opt/ppanel/logs
-sudo chmod 755 /opt/ppanel/static
+```shell
+sudo mkdir -p /var/log/ppanel
 ```
 
-## 运行服务
+- 创建 systemd 服务文件
 
-### 方式一: 直接运行（测试用）
-
-用于快速测试：
-
-```bash
-# 使二进制文件可执行
-sudo chmod +x /opt/ppanel/gateway
-
-# 直接运行
-cd /opt/ppanel
-sudo ./gateway
-```
-
-按 `Ctrl+C` 停止。
-
-### 方式二: Systemd 服务（推荐）
-
-为生产环境部署创建 systemd 服务：
-
-#### 步骤 1: 创建服务文件
-
-```bash
-sudo nano /etc/systemd/system/ppanel.service
-```
-
-**服务文件内容:**
-
-```ini
+```shell
+cat > /etc/systemd/system/ppanel.service <<EOF
 [Unit]
-Description=PPanel Server
-Documentation=https://github.com/perfect-panel/ppanel
-After=network-online.target
-Wants=network-online.target
+Description=PPANEL Server
+After=network.target
 
 [Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/ppanel
-ExecStart=/opt/ppanel/gateway
+ExecStart=/usr/local/bin/ppanel-server run --config /usr/local/etc/ppanel/ppanel.yaml
 Restart=always
-RestartSec=10
-
-# 安全设置
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/ppanel/data /opt/ppanel/logs
-
-# 资源限制
-LimitNOFILE=65535
-LimitNPROC=4096
-
-# 日志
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=ppanel
+User=root
+WorkingDirectory=/usr/local/bin
 
 [Install]
 WantedBy=multi-user.target
+EOF
 ```
 
-#### 步骤 2: 启用并启动服务
+- 重新加载 systemd 服务
 
-```bash
-# 重新加载 systemd
-sudo systemctl daemon-reload
-
-# 启用服务（开机自启）
-sudo systemctl enable ppanel
-
-# 启动服务
-sudo systemctl start ppanel
-
-# 检查状态
-sudo systemctl status ppanel
+```shell
+systemctl daemon-reload
 ```
 
-## 服务管理
+- 启动服务
 
-### 检查状态
-
-```bash
-# 检查服务是否运行
-sudo systemctl status ppanel
-
-# 查看详细状态
-sudo systemctl show ppanel
+```shell
+systemctl start ppanel
 ```
 
-### 查看日志
-
-```bash
-# 查看 systemd 日志
-sudo journalctl -u ppanel -f
-
-# 查看最后 100 行
-sudo journalctl -u ppanel -n 100
-
-# 查看应用日志
-sudo tail -f /opt/ppanel/logs/ppanel.log
-```
-
-### 启动/停止/重启
-
-```bash
-# 启动服务
-sudo systemctl start ppanel
-
-# 停止服务
-sudo systemctl stop ppanel
-
-# 重启服务
-sudo systemctl restart ppanel
-
-# 重新加载配置（如果支持）
-sudo systemctl reload ppanel
-```
-
-### 启用/禁用自动启动
-
-```bash
-# 启用开机自启
-sudo systemctl enable ppanel
-
-# 禁用自动启动
-sudo systemctl disable ppanel
-
-# 检查是否已启用
-sudo systemctl is-enabled ppanel
-```
-
-## 部署后配置
-
-### 验证安装
-
-```bash
-# 检查服务是否监听端口
-sudo netstat -tlnp | grep 8080
-
-# 或使用 ss
-sudo ss -tlnp | grep 8080
-
-# 测试 HTTP 访问
-curl http://localhost:8080
-
-# 检查进程
-ps aux | grep ppanel
-```
-
-### 访问应用
-
-- **用户面板**: `http://your-server-ip:8080`
-- **管理后台**: `http://your-server-ip:8080/admin/`
-
-::: warning 默认凭据
-**默认管理员账号**:
-- **邮箱**: `admin@ppanel.dev`
-- **密码**: `password`
-
-**安全提醒**: 首次登录后请立即修改默认凭据。
-:::
-
-### 配置防火墙
-
-```bash
-# Ubuntu/Debian (UFW)
-sudo ufw allow 8080/tcp
-sudo ufw status
-
-# CentOS/RHEL (firewalld)
-sudo firewall-cmd --permanent --add-port=8080/tcp
-sudo firewall-cmd --reload
-sudo firewall-cmd --list-ports
-```
-
-### 设置反向代理
-
-生产环境建议使用 Nginx 或 Caddy 作为反向代理：
-
-**Nginx 配置** (`/etc/nginx/sites-available/ppanel`):
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # WebSocket 支持
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-```
-
-启用配置：
-```bash
-sudo ln -s /etc/nginx/sites-available/ppanel /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-## 升级
-
-直接从**管理后台**主页升级 PPanel。在仪表盘主页可以检查新版本并一键升级。
-
-::: tip 提示
-系统会自动处理升级过程，包括下载新的二进制文件和重启服务。
-:::
-
-## 故障排除
-
-### 服务启动失败
-
-```bash
-# 查看详细日志
-sudo journalctl -u ppanel -xe
-
-# 检查配置语法
-/opt/ppanel/ppanel-server --check-config
-
-# 验证权限
-ls -la /opt/ppanel
-sudo chown -R root:root /opt/ppanel
-```
-
-### 端口被占用
-
-```bash
-# 查找占用端口的进程
-sudo lsof -i :8080
-sudo netstat -tlnp | grep 8080
-
-# 在配置中更改端口
-sudo nano /opt/ppanel/etc/ppanel.yaml
-# 更新 server.port 值
-
-# 重启服务
-sudo systemctl restart ppanel
-```
-
-### 二进制文件无法执行
-
-```bash
-# 检查架构兼容性
-uname -m
-file /opt/ppanel/gateway
-
-# 检查是否可执行
-ls -la /opt/ppanel/gateway
-sudo chmod +x /opt/ppanel/gateway
-
-# 检查缺失的库（静态编译应该没有）
-ldd /opt/ppanel/gateway
-```
-
-### 内存使用过高
-
-```bash
-# 检查内存使用
-ps aux | grep ppanel
-top -p $(pgrep ppanel-server)
-
-# 在 systemd 服务中添加内存限制
-sudo nano /etc/systemd/system/ppanel.service
-# 在 [Service] 下添加:
-# MemoryMax=2G
-# MemoryHigh=1.5G
-
-sudo systemctl daemon-reload
-sudo systemctl restart ppanel
-```
-
-### 数据库连接问题
-
-```bash
-# 检查数据库文件权限
-ls -la /opt/ppanel/data/
-
-# 对于 SQLite，验证配置中的路径
-sudo nano /opt/ppanel/etc/ppanel.yaml
-
-# 测试数据库连接
-sqlite3 /opt/ppanel/data/ppanel.db "SELECT 1;"
-
-# 检查日志中的数据库错误
-sudo journalctl -u ppanel | grep -i database
-```
-
-## 卸载
-
-完全移除 PPanel：
-
-```bash
-# 停止并禁用服务
-sudo systemctl stop ppanel
-sudo systemctl disable ppanel
-
-# 删除服务文件
-sudo rm /etc/systemd/system/ppanel.service
-sudo systemctl daemon-reload
-
-# 删除安装目录
-sudo rm -rf /opt/ppanel
-
-# 删除防火墙规则（如果添加过）
-sudo ufw delete allow 8080/tcp
-# 或
-sudo firewall-cmd --permanent --remove-port=8080/tcp
-sudo firewall-cmd --reload
-```
-
-## 高级配置
-
-### 以非 Root 用户运行
-
-为了更好的安全性，使用专用用户运行：
-
-```bash
-# 创建专用用户
-sudo useradd -r -s /bin/false ppanel
-
-# 更改所有权
-sudo chown -R ppanel:ppanel /opt/ppanel
-
-# 更新 systemd 服务
-sudo nano /etc/systemd/system/ppanel.service
-# 更改: User=ppanel
-
-# 如果绑定到端口 < 1024，授予能力
-sudo setcap 'cap_net_bind_service=+ep' /opt/ppanel/gateway
-
-sudo systemctl daemon-reload
-sudo systemctl restart ppanel
-```
-
-### 多实例部署
-
-运行多个实例：
-
-```bash
-# 创建独立目录
-sudo mkdir -p /opt/ppanel-1
-sudo mkdir -p /opt/ppanel-2
-
-# 复制二进制文件和配置
-sudo cp -r /opt/ppanel/* /opt/ppanel-1/
-sudo cp -r /opt/ppanel/* /opt/ppanel-2/
-
-# 编辑配置使用不同端口
-sudo nano /opt/ppanel-1/etc/ppanel.yaml  # port: 8081
-sudo nano /opt/ppanel-2/etc/ppanel.yaml  # port: 8082
-
-# 创建独立的 systemd 服务
-sudo cp /etc/systemd/system/ppanel.service /etc/systemd/system/ppanel-1.service
-sudo cp /etc/systemd/system/ppanel.service /etc/systemd/system/ppanel-2.service
-
-# 相应编辑服务文件
-sudo systemctl daemon-reload
-sudo systemctl enable ppanel-1 ppanel-2
-sudo systemctl start ppanel-1 ppanel-2
-```
-
-### 自定义环境变量
-
-在 systemd 服务中添加环境变量：
-
-```ini
-[Service]
-Environment="PPANEL_ENV=production"
-Environment="PPANEL_DEBUG=false"
-EnvironmentFile=/opt/ppanel/env.conf
-```
-
-## 性能调优
-
-### 优化文件限制
-
-```bash
-# 编辑限制
-sudo nano /etc/security/limits.conf
-
-# 添加:
-* soft nofile 65535
-* hard nofile 65535
-
-# systemd 服务中已设置:
-# LimitNOFILE=65535
-```
-
-### 启用数据库优化
-
-对于 SQLite：
-
-```bash
-# 在 ppanel.yaml 中添加
-database:
-  type: sqlite
-  path: /opt/ppanel/data/ppanel.db
-  options:
-    cache_size: -2000
-    journal_mode: WAL
-    synchronous: NORMAL
-```
+##### 其他说明
+
+1. 安装路径：二进制文件最终移动到 /usr/local/bin 目录下
+2. systemd 服务：
+    - 服务名称：ppanel
+    - 服务配置文件：/etc/systemd/system/ppanel.service
+    - 服务启动命令：systemctl start ppanel
+    - 服务停止命令：systemctl stop ppanel
+    - 服务重启命令：systemctl restart ppanel
+    - 服务状态命令：systemctl status ppanel
+    - 服务开机自启：systemctl enable ppanel
+3. 设置开机自启可通过以下命令开机自启
+
+   ```shell
+   systemctl enable ppanel
+   ```
+
+4. 服务日志：路径由配置文件中的 `Logger.FilePath` 决定，本文配置为 `/var/log/ppanel/ppanel.log`
+5. 可通过 `journalctl -u ppanel -f` 查看服务日志
+6. 当配置文件为空或者不存在的情况下，服务会使用默认配置启动，配置文件路径为：`./etc/ppanel.yaml`，
+   请通过`http://服务器地址:8080/init` 初始化系统配置
 
 ## 下一步
 
@@ -574,6 +315,6 @@ database:
 
 ## 需要帮助？
 
-- 查看 [GitHub Issues](https://github.com/perfect-panel/ppanel/issues)
+- 查看 [GitHub Issues](https://github.com/perfect-panel/backend/issues)
 - 查看 systemd 日志: `sudo journalctl -u ppanel -f`
-- 查看应用日志: `tail -f /opt/ppanel/logs/ppanel.log`
+- 查看应用日志: `tail -f /var/log/ppanel/ppanel.log`

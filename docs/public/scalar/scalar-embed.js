@@ -1,6 +1,6 @@
 (() => {
   const params = new URLSearchParams(window.location.search);
-  const spec = params.get("spec") || "/swagger.json";
+  const spec = params.get("spec") || "/swagger/ppanel.json";
   const title = params.get("title") || "API Reference";
   const theme = params.get("theme") || "saturn";
   const layout = params.get("layout") || "classic";

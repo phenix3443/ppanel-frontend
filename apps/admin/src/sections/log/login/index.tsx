@@ -2,22 +2,18 @@
 
 import { useSearch } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
 import { ProTable } from "@workspace/ui/composed/pro-table/pro-table";
-import { filterLoginLog } from "@workspace/ui/services/admin/log";
+import { getLogLoginList as filterLoginLog } from "@workspace/ui/services/admin/admin";
 import { useTranslation } from "react-i18next";
-import { IpLink } from "@/components/ip-link";
+import { RequestSource } from "@/sections/log/request-source";
 import { UserDetail } from "@/sections/user/user-detail";
 import { formatDate } from "@/utils/common";
+import { useTableSearchParams } from "@/utils/use-table-search-params";
 
 export default function LoginLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const syncFilters = useTableSearchParams(["date", "user_id"]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -40,32 +36,11 @@ export default function LoginLogPage() {
         },
 
         {
-          accessorKey: "login_ip",
-          header: t("column.ip", "IP"),
+          id: "request_source",
+          header: t("column.requestSource", "Request source"),
           cell: ({ row }) => (
-            <IpLink ip={String((row.original as any).login_ip || "")} />
+            <RequestSource ip={row.original.login_ip} metadata={row.original} />
           ),
-        },
-        {
-          accessorKey: "user_agent",
-          header: t("column.userAgent", "User Agent"),
-          cell: ({ row }) => {
-            const userAgent = String(row.original.user_agent || "");
-            return (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="max-w-48 cursor-help truncate">
-                      {userAgent}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="wrap-break-word max-w-md">{userAgent}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            );
-          },
         },
         {
           accessorKey: "success",
@@ -86,6 +61,7 @@ export default function LoginLogPage() {
       ]}
       header={{ title: t("title.login", "Login Log") }}
       initialFilters={initialFilters}
+      onFiltersChange={syncFilters}
       params={[
         { key: "date", type: "date" },
         { key: "user_id", placeholder: t("column.userId", "User ID") },

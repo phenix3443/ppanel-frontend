@@ -4,14 +4,16 @@ import { Link, useSearch } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { ProTable } from "@workspace/ui/composed/pro-table/pro-table";
-import { filterServerTrafficLog } from "@workspace/ui/services/admin/log";
+import { getLogServerTrafficList as filterServerTrafficLog } from "@workspace/ui/services/admin/admin";
 import { formatBytes } from "@workspace/ui/utils/formatting";
 import { useTranslation } from "react-i18next";
 import { useServer } from "@/stores/server";
+import { useTableSearchParams } from "@/utils/use-table-search-params";
 
 export default function ServerTrafficLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const syncFilters = useTableSearchParams(["date", "server_id"]);
   const { getServerName } = useServer();
 
   const today = new Date().toISOString().split("T")[0];
@@ -64,6 +66,7 @@ export default function ServerTrafficLogPage() {
       ]}
       header={{ title: t("title.serverTraffic", "Server Traffic Log") }}
       initialFilters={initialFilters}
+      onFiltersChange={syncFilters}
       params={[
         { key: "date", type: "date" },
         { key: "server_id", placeholder: t("column.serverId", "Server ID") },

@@ -1,3 +1,4 @@
+import { useSearch } from "@tanstack/react-router";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -14,8 +15,8 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import {
   getOrderList,
-  updateOrderStatus,
-} from "@workspace/ui/services/admin/order";
+  putOrderStatus as updateOrderStatus,
+} from "@workspace/ui/services/admin/admin";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Display } from "@/components/display";
@@ -25,6 +26,7 @@ import { UserDetail } from "../user/user-detail";
 
 export default function Order() {
   const { t } = useTranslation("order");
+  const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
 
   const statusOptions = [
     {
@@ -56,6 +58,10 @@ export default function Order() {
   const ref = useRef<ProTableActions>(null);
 
   const { subscribes, getSubscribeName } = useSubscribe();
+
+  const initialFilters = {
+    user_id: sp.user_id ? Number(sp.user_id) : undefined,
+  };
 
   return (
     <ProTable<API.Order, any>
@@ -105,14 +111,14 @@ export default function Order() {
                     <Display type="currency" value={order.amount} />
                   </Button>
                 </HoverCardTrigger>
-                <HoverCardContent>
+                <HoverCardContent className="w-auto max-w-[80vw]">
                   <div className="grid gap-3">
                     {order.trade_no && (
                       <>
                         <div className="font-semibold">
                           {t("tradeNo", "Transaction Number")}
                         </div>
-                        <span className="text-muted-foreground">
+                        <span className="break-all text-muted-foreground">
                           {order.trade_no}
                         </span>
                         <Separator className="my-2" />
@@ -229,6 +235,8 @@ export default function Order() {
           },
         },
       ]}
+      initialFilters={initialFilters}
+      key={JSON.stringify(initialFilters)}
       params={[
         {
           key: "status",

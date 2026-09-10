@@ -5,6 +5,12 @@ on:
     branches: [main, dev]
     paths-ignore:
       - 'docs/**'
+      - '.github/**'
+      - 'scripts/**'
+      - 'packages/ui/openapi2ts.config.ts'
+      - 'packages/ui/openapi-templates/**'
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -42,3 +48,4 @@ jobs:
         run: bun run release
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          HUSKY: 0

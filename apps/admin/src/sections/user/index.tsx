@@ -29,18 +29,19 @@ import {
   type ProTableActions,
 } from "@workspace/ui/composed/pro-table/pro-table";
 import {
-  createUser,
+  postUser as createUser,
   deleteUser,
   getUserDetail,
   getUserList,
-  updateUserBasicInfo,
-} from "@workspace/ui/services/admin/user";
+  putUserBasic as updateUserBasicInfo,
+} from "@workspace/ui/services/admin/admin";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Display } from "@/components/display";
 import { useSubscribe } from "@/stores/subscribe";
 import { formatDate } from "@/utils/common";
+import { useTableSearchParams } from "@/utils/use-table-search-params";
 import { UserDetail } from "./user-detail";
 import UserForm from "./user-form";
 import { AuthMethodsForm } from "./user-profile/auth-methods-form";
@@ -55,16 +56,23 @@ export default function User() {
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
 
   const { subscribes } = useSubscribe();
+  const syncFilters = useTableSearchParams([
+    "search",
+    "user_id",
+    "subscribe_id",
+    "user_subscribe_id",
+  ]);
 
   const initialFilters = {
     search: sp.search || undefined,
     user_id: sp.user_id || undefined,
     subscribe_id: sp.subscribe_id || undefined,
     user_subscribe_id: sp.user_subscribe_id || undefined,
+    user_subscribe_token: sp.user_subscribe_token || undefined,
   };
 
   return (
-    <ProTable<API.User, API.GetUserListParams>
+    <ProTable<API.User, API.getUserListParams>
       action={ref}
       actions={{
         render: (row) => [
@@ -73,28 +81,11 @@ export default function User() {
             onUpdated={() => ref.current?.refresh()}
             userId={row.id}
           />,
-          <SubscriptionSheet key="subscription" userId={row.id} />,
-          <ConfirmButton
-            cancelText={t("cancel", "Cancel")}
-            confirmText={t("confirm", "Confirm")}
-            description={t(
-              "deleteDescription",
-              "This action cannot be undone."
-            )}
-            key="edit"
-            onConfirm={async () => {
-              await deleteUser({ id: row.id });
-              toast.success(t("deleteSuccess", "Deleted successfully"));
-              ref.current?.refresh();
-            }}
-            title={t("confirmDelete", "Confirm Delete")}
-            trigger={
-              <Button variant="destructive">{t("delete", "Delete")}</Button>
-            }
-          />,
           <DropdownMenu key="more" modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">{t("more", "More")}</Button>
+              <Button variant="outline">
+                {t("relatedRecords", "Related records")}
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
@@ -270,33 +261,51 @@ export default function User() {
         ),
       }}
       initialFilters={initialFilters}
-      key={initialFilters.user_id}
+      onFiltersChange={syncFilters}
       params={[
         {
-          key: "subscribe_id",
-          placeholder: t("subscription", "Subscription"),
-          options: subscribes?.map((item) => ({
-            label: item.name!,
-            value: String(item.id!),
-          })),
-        },
-        {
           key: "search",
-          placeholder: "Search",
+          label: t("accountSearch", "Account"),
+          placeholder: t(
+            "accountSearchPlaceholder",
+            "Email / phone / username"
+          ),
         },
         {
           key: "user_id",
+          label: t("userId", "User ID"),
           placeholder: t("userId", "User ID"),
         },
         {
           key: "user_subscribe_id",
-          placeholder: t("subscriptionId", "Subscription ID"),
+          label: t("userSubscriptionId", "User subscription ID"),
+          placeholder: t("userSubscriptionId", "User subscription ID"),
+        },
+        {
+          key: "user_subscribe_token",
+          label: t("subscriptionToken", "Subscription token"),
+          placeholder: t(
+            "subscriptionTokenOrUrl",
+            "Subscription URL / Token / UUID"
+          ),
+        },
+        {
+          key: "subscribe_id",
+          label: t("subscriptionProduct", "Subscription product"),
+          placeholder: t("subscriptionProduct", "Subscription product"),
+          options: subscribes?.map((item) => ({
+            label: item.name!,
+            value: String(item.id!),
+          })),
         },
       ]}
       request={async (pagination, filter) => {
         const { data } = await getUserList({
           ...pagination,
           ...filter,
+          user_subscribe_token: extractSubscribeTokenOrUuid(
+            filter.user_subscribe_token
+          ),
         });
         return {
           list: data.data?.list || [],
@@ -305,6 +314,32 @@ export default function User() {
       }}
     />
   );
+}
+
+function extractSubscribeTokenOrUuid(value: unknown) {
+  if (typeof value !== "string") {
+    return;
+  }
+  const input = value.trim();
+  if (!input) {
+    return;
+  }
+  const queryIndex = input.indexOf("?");
+  const search =
+    queryIndex !== -1
+      ? input.slice(queryIndex + 1).split("#", 1)[0]
+      : input.startsWith("token=") || input.startsWith("uuid=")
+        ? input
+        : "";
+  if (search) {
+    const params = new URLSearchParams(search);
+    const tokenOrUuid = params.get("token") ?? params.get("uuid");
+    if (tokenOrUuid !== null) {
+      const trimmedTokenOrUuid = tokenOrUuid.trim();
+      return trimmedTokenOrUuid || undefined;
+    }
+  }
+  return input;
 }
 
 function ProfileSheet({
@@ -333,65 +368,68 @@ function ProfileSheet({
   return (
     <Sheet onOpenChange={setOpen} open={open}>
       <SheetTrigger asChild>
-        <Button variant="default">{t("edit", "Edit")}</Button>
+        <Button variant="default">{t("manage", "Manage")}</Button>
       </SheetTrigger>
-      <SheetContent
-        className="w-[700px] max-w-full md:max-w-screen-lg"
-        side="right"
-      >
-        <SheetHeader>
+      <SheetContent className="w-[1000px] max-w-full md:max-w-7xl" side="right">
+        <SheetHeader className="flex-row items-center justify-between gap-3 pr-12">
           <SheetTitle>
             {t("userProfile", "User Profile")} · ID: {userId}
           </SheetTitle>
+          <ConfirmButton
+            cancelText={t("cancel", "Cancel")}
+            confirmText={t("confirm", "Confirm")}
+            description={t(
+              "deleteDescription",
+              "This action cannot be undone."
+            )}
+            onConfirm={async () => {
+              await deleteUser({ id: userId });
+              toast.success(t("deleteSuccess", "Deleted successfully"));
+              setOpen(false);
+              onUpdated?.();
+            }}
+            title={t("confirmDelete", "Confirm Delete")}
+            trigger={
+              <Button size="sm" variant="destructive">
+                {t("delete", "Delete")}
+              </Button>
+            }
+          />
         </SheetHeader>
-        {user && (
-          <ScrollArea className="h-[calc(100dvh-140px)] p-2">
-            <Tabs defaultValue="basic">
-              <TabsList className="mb-3">
-                <TabsTrigger value="basic">
-                  {t("basicInfoTitle", "Basic Info")}
-                </TabsTrigger>
-                <TabsTrigger value="notify">
-                  {t("notifySettingsTitle", "Notify Settings")}
-                </TabsTrigger>
-                <TabsTrigger value="auth">
-                  {t("authMethodsTitle", "Auth Methods")}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent className="mt-0" value="basic">
-                <BasicInfoForm refetch={refetchAll} user={user} />
-              </TabsContent>
-              <TabsContent className="mt-0" value="notify">
-                <NotifySettingsForm refetch={refetchAll} user={user} />
-              </TabsContent>
-              <TabsContent className="mt-0" value="auth">
-                <AuthMethodsForm refetch={refetchAll} user={user} />
-              </TabsContent>
-            </Tabs>
-          </ScrollArea>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function SubscriptionSheet({ userId }: { userId: number }) {
-  const { t } = useTranslation("user");
-  const [open, setOpen] = useState(false);
-  return (
-    <Sheet onOpenChange={setOpen} open={open}>
-      <SheetTrigger asChild>
-        <Button variant="secondary">{t("subscription", "Subscription")}</Button>
-      </SheetTrigger>
-      <SheetContent className="w-[1000px] max-w-full md:max-w-7xl" side="right">
-        <SheetHeader>
-          <SheetTitle>
-            {t("subscriptionList", "Subscription List")} · ID: {userId}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="mt-2 px-4">
-          <UserSubscription userId={userId} />
-        </div>
+        <ScrollArea className="h-[calc(100dvh-88px)] px-4 pb-4">
+          <Tabs defaultValue="basic">
+            <TabsList className="mb-3 h-auto flex-wrap">
+              <TabsTrigger value="basic">
+                {t("basicInfoTitle", "Basic Info")}
+              </TabsTrigger>
+              <TabsTrigger value="subscriptions">
+                {t("subscriptionList", "Subscription List")}
+              </TabsTrigger>
+              <TabsTrigger value="notify">
+                {t("notifySettingsTitle", "Notify Settings")}
+              </TabsTrigger>
+              <TabsTrigger value="auth">
+                {t("authMethodsTitle", "Auth Methods")}
+              </TabsTrigger>
+            </TabsList>
+            {user && (
+              <>
+                <TabsContent className="mt-0" value="basic">
+                  <BasicInfoForm refetch={refetchAll} user={user} />
+                </TabsContent>
+                <TabsContent className="mt-0" value="notify">
+                  <NotifySettingsForm refetch={refetchAll} user={user} />
+                </TabsContent>
+                <TabsContent className="mt-0" value="auth">
+                  <AuthMethodsForm refetch={refetchAll} user={user} />
+                </TabsContent>
+              </>
+            )}
+            <TabsContent className="mt-0" value="subscriptions">
+              <UserSubscription userId={userId} />
+            </TabsContent>
+          </Tabs>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

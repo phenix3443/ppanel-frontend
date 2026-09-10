@@ -1,8 +1,9 @@
 import {
-  filterNodeList,
-  queryNodeTag,
-} from "@workspace/ui/services/admin/server";
+  getServerNodeList as filterNodeList,
+  getServerNodeTags as queryNodeTag,
+} from "@workspace/ui/services/admin/admin";
 import { create } from "zustand";
+import { fetchAllPaginated } from "./pagination";
 
 interface NodeState {
   // Data
@@ -44,9 +45,9 @@ export const useNodeStore = create<NodeState>((set, get) => ({
 
     set({ loading: true });
     try {
-      const { data } = await filterNodeList({ page: 1, size: 999_999_999 });
+      const nodes = await fetchAllPaginated(filterNodeList);
       set({
-        nodes: data?.data?.list || [],
+        nodes,
         loaded: true,
       });
     } catch (_error) {

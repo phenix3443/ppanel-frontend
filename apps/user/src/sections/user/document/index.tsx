@@ -8,16 +8,18 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
 import Empty from "@workspace/ui/composed/empty";
-import { queryDocumentList } from "@workspace/ui/services/user/document";
+import { getV1PublicDocumentList as queryDocumentList } from "@workspace/ui/services/user/user";
 import { useTranslation } from "react-i18next";
-import { TUTORIAL_DOCUMENT } from "@/config";
 import { DocumentButton } from "@/sections/user/document/document-button";
 import { getTutorialList } from "@/sections/user/document/tutorial";
 import { TutorialButton } from "@/sections/user/document/tutorial-button";
+import { useGlobalStore } from "@/stores/global";
 
 export default function Document() {
   const { t, i18n } = useTranslation("document");
   const locale = i18n.language;
+  const { common } = useGlobalStore();
+  const showTutorial = common.subscribe?.show_tutorial !== false;
 
   const { data } = useQuery({
     queryKey: ["queryDocumentList"],
@@ -42,7 +44,7 @@ export default function Document() {
       const list = await getTutorialList();
       return list.get(locale);
     },
-    enabled: TUTORIAL_DOCUMENT === "true",
+    enabled: showTutorial,
   });
 
   if (
@@ -84,7 +86,7 @@ export default function Document() {
         </>
       )}
 
-      {TutorialList && TutorialList?.length > 0 && (
+      {showTutorial && TutorialList && TutorialList?.length > 0 && (
         <>
           <h2 className="flex items-center gap-1.5 font-semibold">
             {t("tutorial", "Tutorial")}

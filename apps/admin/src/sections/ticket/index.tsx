@@ -18,11 +18,11 @@ import {
 } from "@workspace/ui/composed/pro-table/pro-table";
 import { cn } from "@workspace/ui/lib/utils";
 import {
-  createTicketFollow,
-  getTicket,
+  postTicketFollow as createTicketFollow,
+  getTicketDetail as getTicket,
   getTicketList,
-  updateTicketStatus,
-} from "@workspace/ui/services/admin/ticket";
+  putTicket as updateTicketStatus,
+} from "@workspace/ui/services/admin/admin";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -157,7 +157,19 @@ export default function Page() {
             placeholder: t("status.0", "Status"),
             options: [
               {
-                label: t("close", "Close"),
+                label: t("status.1", "Pending Follow-up"),
+                value: "1",
+              },
+              {
+                label: t("status.2", "Pending Reply"),
+                value: "2",
+              },
+              {
+                label: t("status.3", "Resolved"),
+                value: "3",
+              },
+              {
+                label: t("status.4", "Closed"),
                 value: "4",
               },
             ],

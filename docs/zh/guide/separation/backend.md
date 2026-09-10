@@ -44,68 +44,51 @@ sudo systemctl enable docker
 创建后端配置文件 `config.yaml`：
 
 ```yaml
-# 数据库配置
-database:
-  type: mysql
-  host: localhost
-  port: 3306
-  username: ppanel
-  password: your_password
-  database: ppanel
+# 监听地址与端口（顶层键，注意大写）
+Host: 0.0.0.0
+Port: 8080
 
-# Redis 配置
-redis:
-  host: localhost
-  port: 6379
-  password: ""
-  db: 0
+# 数据库配置：Addr 为「主机:端口」，Driver 支持 postgres 与 mysql
+Database:
+  Driver: postgres
+  Addr: localhost:5432
+  Username: ppanel
+  Password: your_password
+  Dbname: ppanel
+  Config: sslmode=disable&TimeZone=Asia%2FShanghai
 
-# 服务配置
-server:
-  host: 0.0.0.0
-  port: 8080
+# Redis 配置：Host 同样为「主机:端口」
+Redis:
+  Host: localhost:6379
+  Pass: ""
+  DB: 0
 
-# CORS 配置（重要：允许前端域名访问）
-cors:
-  allow_origins:
-    - "https://your-frontend-domain.com"
-    - "http://localhost:3000"  # 开发环境
-  allow_methods:
-    - GET
-    - POST
-    - PUT
-    - DELETE
-    - OPTIONS
-  allow_headers:
-    - "*"
-
-# JWT 配置
-jwt:
-  secret: "your-secret-key"
-  expire: 7200  # 2小时
-
-# API 配置
-api:
-  prefix: "/api"
-  version: "v1"
+# JWT 配置：AccessExpire 单位为秒
+JwtAuth:
+  AccessSecret: "用 openssl rand -base64 32 生成"
+  AccessExpire: 604800
 ```
 
-#### 3. 准备 MySQL 数据库
+::: warning 跨域需要在反向代理层处理
+后端没有 CORS 配置项，也不会自行下发 `Access-Control-Allow-Origin`。前后端分离部署时，请把前端与 API 收敛到同一域名下（例如 `/api` 反代到后端），或在 Nginx/Caddy 上添加 CORS 响应头。
+:::
+
+#### 3. 准备 PostgreSQL 数据库
 
 ```bash
-# 使用 Docker 运行 MySQL
+# 使用 Docker 运行 PostgreSQL
 docker run -d \
-  --name ppanel-mysql \
-  -e MYSQL_ROOT_PASSWORD=root_password \
-  -e MYSQL_DATABASE=ppanel \
-  -e MYSQL_USER=ppanel \
-  -e MYSQL_PASSWORD=your_password \
-  -p 3306:3306 \
-  -v ppanel-mysql-data:/var/lib/mysql \
-  mysql:8.0
+  --name ppanel-postgres \
+  -e POSTGRES_DB=ppanel \
+  -e POSTGRES_USER=ppanel \
+  -e POSTGRES_PASSWORD=your_password \
+  -e TZ=Asia/Shanghai \
+  -p 5432:5432 \
+  -v ppanel-postgres-data:/var/lib/postgresql/data \
+  postgres:18-alpine
 
-# 等待 MySQL 启动
-sleep 10
+# 等待数据库就绪
+until docker exec ppanel-postgres pg_isready -U ppanel -d ppanel; do sleep 1; done
 ```
 
 #### 4. 准备 Redis
@@ -123,17 +106,25 @@ docker run -d \
 
 ```bash
 # 拉取后端镜像
-docker pull ppanel/ppanel:latest
+docker pull ppanel/ppanel-server:latest
 
-# 运行后端容器
+# 创建网络，让各容器通过服务名互访（--link 已废弃）
+docker network create ppanel-net 2>/dev/null || true
+docker network connect ppanel-net ppanel-postgres
+docker network connect ppanel-net ppanel-redis
+
+# 运行后端容器：镜像默认读取 /app/etc/ppanel.yaml
 docker run -d \
   --name ppanel-backend \
+  --network ppanel-net \
   -p 8080:8080 \
-  -v $(pwd)/config.yaml:/app/config.yaml \
-  --link ppanel-mysql:mysql \
-  --link ppanel-redis:redis \
-  ppanel/ppanel:latest
+  -v $(pwd)/config.yaml:/app/etc/ppanel.yaml:ro \
+  ppanel/ppanel-server:latest
 ```
+
+::: warning 容器内的数据库地址
+使用上面的网络后，配置文件里要把地址改成容器名：`Addr: ppanel-postgres:5432`、`Host: ppanel-redis:6379`。填 `localhost` 会指向后端容器自身，连接必然失败。
+:::
 
 #### 6. 初始化数据库
 
@@ -162,19 +153,19 @@ chmod +x ppanel
 
 创建配置文件 `config.yaml`（内容同上 Docker 部署方式）。
 
-#### 3. 安装并配置 MySQL
+#### 3. 安装并配置 PostgreSQL
 
 ```bash
-# Ubuntu/Debian
+# Debian/Ubuntu，使用 PostgreSQL 官方仓库
 sudo apt update
-sudo apt install mysql-server -y
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+sudo apt install -y postgresql-18
 
-# 创建数据库和用户
-sudo mysql <<EOF
-CREATE DATABASE ppanel;
-CREATE USER 'ppanel'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON ppanel.* TO 'ppanel'@'localhost';
-FLUSH PRIVILEGES;
+# 创建数据库和角色
+sudo -u postgres psql <<EOF
+CREATE ROLE ppanel WITH LOGIN PASSWORD 'your_password';
+CREATE DATABASE ppanel OWNER ppanel ENCODING 'UTF8';
 EOF
 ```
 
@@ -189,9 +180,12 @@ sudo systemctl enable redis-server
 
 #### 5. 初始化数据库
 
+服务首次启动时会自动建表，无需手动执行迁移。
+
+若是从 MySQL/MariaDB 迁移到 PostgreSQL，可使用内置命令搬运既有数据：
+
 ```bash
-# 执行数据库迁移
-./ppanel migrate
+./ppanel-server migrate mysql2postgres --help
 ```
 
 #### 6. 创建 systemd 服务
@@ -201,13 +195,13 @@ sudo systemctl enable redis-server
 ```ini
 [Unit]
 Description=PPanel Backend Service
-After=network.target mysql.service redis.service
+After=network.target postgresql.service redis-server.service
 
 [Service]
 Type=simple
 User=ppanel
 WorkingDirectory=/opt/ppanel
-ExecStart=/opt/ppanel/ppanel server
+ExecStart=/opt/ppanel/ppanel-server run --config /opt/ppanel/etc/ppanel.yaml
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -320,43 +314,29 @@ curl http://localhost:8080/api/v1/ping
 # {"message":"pong"}
 ```
 
-## 环境变量配置
+## 配置方式说明
 
-除了配置文件，您也可以使用环境变量：
-
-```bash
-# 数据库配置
-export DB_HOST=localhost
-export DB_PORT=3306
-export DB_USER=ppanel
-export DB_PASSWORD=your_password
-export DB_NAME=ppanel
-
-# Redis 配置
-export REDIS_HOST=localhost
-export REDIS_PORT=6379
-export REDIS_PASSWORD=""
-
-# JWT 密钥
-export JWT_SECRET=your-secret-key
-
-# 服务端口
-export SERVER_PORT=8080
-```
-
-Docker 运行时使用环境变量：
+后端只从 YAML 配置文件读取配置，**不支持通过环境变量覆盖配置项**。容器部署时请挂载配置文件：
 
 ```bash
 docker run -d \
   --name ppanel-backend \
+  --network ppanel-net \
   -p 8080:8080 \
-  -e DB_HOST=mysql \
-  -e DB_USER=ppanel \
-  -e DB_PASSWORD=your_password \
-  -e REDIS_HOST=redis \
-  --link ppanel-mysql:mysql \
-  --link ppanel-redis:redis \
-  ppanel/ppanel:latest
+  -v $(pwd)/config.yaml:/app/etc/ppanel.yaml:ro \
+  ppanel/ppanel-server:latest
+```
+
+镜像内默认读取 `/app/etc/ppanel.yaml`，也可以用 `--config` 指定其他路径：
+
+```bash
+docker run -d \
+  --name ppanel-backend \
+  --network ppanel-net \
+  -p 8080:8080 \
+  -v $(pwd)/etc:/app/etc:ro \
+  ppanel/ppanel-server:latest \
+  run --config /app/etc/my-config.yaml
 ```
 
 ## 安全建议
@@ -383,11 +363,11 @@ docker logs ppanel-backend
 ### 数据库连接失败
 
 ```bash
-# 测试 MySQL 连接
-mysql -h localhost -u ppanel -p -e "SELECT 1;"
+# 测试 PostgreSQL 连接
+psql -h localhost -U ppanel -d ppanel -c "SELECT 1;"
 
-# 检查 MySQL 服务状态
-sudo systemctl status mysql
+# 检查 PostgreSQL 服务状态
+sudo systemctl status postgresql
 ```
 
 ### Redis 连接失败
@@ -402,46 +382,38 @@ sudo systemctl status redis-server
 
 ### CORS 错误
 
-确保在 `config.yaml` 中正确配置了前端域名：
+后端不提供 CORS 配置，跨域需在反向代理层解决。推荐把前端与 API 放在同一域名下，例如 Nginx：
 
-```yaml
-cors:
-  allow_origins:
-    - "https://your-frontend-domain.com"
+```nginx
+location /api/ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
 ```
+
+若必须跨域，则在代理层补充响应头（`Access-Control-Allow-Origin` 等），并确保 `OPTIONS` 预检请求被正确处理。
 
 ## 性能优化
 
-### 数据库优化
+### 数据库连接池
 
-```sql
--- 创建必要的索引
-CREATE INDEX idx_user_email ON users(email);
-CREATE INDEX idx_order_status ON orders(status);
-CREATE INDEX idx_created_at ON orders(created_at);
-```
-
-### Redis 缓存配置
+`Database` 段中可调的连接池与慢查询阈值：
 
 ```yaml
-redis:
-  # 启用缓存
-  cache_enabled: true
-  # 缓存过期时间（秒）
-  cache_ttl: 3600
+Database:
+  MaxIdleConns: 10      # 空闲连接数
+  MaxOpenConns: 100     # 最大连接数，按并发量调整
+  SlowThreshold: 1000   # 慢查询日志阈值（毫秒）
 ```
 
-### 应用层优化
+### 索引
 
-```yaml
-# 启用 Gzip 压缩
-server:
-  gzip: true
+表结构由服务启动时自动迁移并已包含常用索引，通常无需手工干预。如果确认某类查询存在瓶颈，再针对实际慢查询日志补充索引。
 
-# 调整并发连接数
-server:
-  max_connections: 1000
-```
+### 反向代理
+
+Gzip 压缩、并发连接数、请求体大小等属于接入层配置，请在 Nginx 或 Caddy 上设置，后端不提供对应选项。
 
 ## 升级指南
 
@@ -449,28 +421,24 @@ server:
 
 ```bash
 # 拉取最新镜像
-docker pull ppanel/ppanel:latest
+docker pull ppanel/ppanel-server:latest
 
 # 停止旧容器
 docker stop ppanel-backend
 
 # 备份数据
-docker exec ppanel-mysql mysqldump -u ppanel -p ppanel > backup.sql
+docker exec ppanel-postgres pg_dump -U ppanel ppanel > backup.sql
 
 # 删除旧容器
 docker rm ppanel-backend
 
-# 运行新容器
+# 运行新容器（表结构会在启动时自动迁移）
 docker run -d \
   --name ppanel-backend \
+  --network ppanel-net \
   -p 8080:8080 \
-  -v $(pwd)/config.yaml:/app/config.yaml \
-  --link ppanel-mysql:mysql \
-  --link ppanel-redis:redis \
-  ppanel/ppanel:latest
-
-# 执行数据库迁移
-docker exec ppanel-backend ./ppanel migrate
+  -v $(pwd)/config.yaml:/app/etc/ppanel.yaml:ro \
+  ppanel/ppanel-server:latest
 ```
 
 ### 二进制升级
@@ -480,19 +448,18 @@ docker exec ppanel-backend ./ppanel migrate
 sudo systemctl stop ppanel
 
 # 备份旧版本
-sudo cp /opt/ppanel/ppanel /opt/ppanel/ppanel.backup
+sudo cp /opt/ppanel/ppanel-server /opt/ppanel/ppanel-server.backup
+
+# 备份数据库
+pg_dump -h localhost -U ppanel ppanel > backup.sql
 
 # 下载新版本
-wget https://github.com/perfect-panel/ppanel/releases/latest/download/ppanel-linux-amd64.tar.gz
-tar -xzf ppanel-linux-amd64.tar.gz
+wget https://github.com/perfect-panel/backend/releases/latest/download/ppanel-server-linux-amd64.tar.gz
+tar -xzf ppanel-server-linux-amd64.tar.gz
 
-# 替换文件
-sudo mv ppanel /opt/ppanel/
-sudo chown ppanel:ppanel /opt/ppanel/ppanel
-
-# 执行数据库迁移
-cd /opt/ppanel
-sudo -u ppanel ./ppanel migrate
+# 替换文件（表结构会在启动时自动迁移）
+sudo mv ppanel-server /opt/ppanel/
+sudo chown ppanel:ppanel /opt/ppanel/ppanel-server
 
 # 启动服务
 sudo systemctl start ppanel

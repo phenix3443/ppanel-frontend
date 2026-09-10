@@ -1,0 +1,1994 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "HTTP API for PPanel's Hertz server. Application errors are returned in the response code and message fields.",
+        "title": "PPanel API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/v1/auth/check": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Check user is exist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CheckUserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/check/telephone": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Check user telephone is exist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "telephone",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "telephone_area_code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TelephoneCheckUserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/login/device": {
+            "post": {
+                "description": "When device security is enabled, requests and response data use a signed data/time/sign envelope. Each request needs a fresh nonce; see docs/device-authentication.md. The User-Agent is read from the HTTP header.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Device Login",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DeviceLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/login/telephone": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "User Telephone login",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TelephoneLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/oauth/callback/apple": {
+            "post": {
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Apple Login Callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization code",
+                        "name": "code",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Apple identity token",
+                        "name": "id_token",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "OAuth state",
+                        "name": "state",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to the configured frontend",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/oauth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "OAuth login",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAthLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.OAuthLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/oauth/login/token": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "OAuth login get token",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OAuthLoginGetTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "registers a user.",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/register/telephone": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "User Telephone register",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TelephoneRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/reset": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/reset/telephone": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TelephoneResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/ads": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get Ads",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "device",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "position",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.GetAdsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/check_verification_code": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Check verification code",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckVerificationCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CheckVerificationCodeRespone"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/client": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get Client",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.GetSubscribeClientResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/heartbeat": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Heartbeat",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.HeartbeatResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/send_code": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get verification code",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SendCodeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/send_sms_code": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get sms verification code",
+                "parameters": [
+                    {
+                        "description": "Request parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SendSmsCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SendCodeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/site/config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get global config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.GetGlobalConfigResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/site/privacy": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get Privacy Policy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PrivacyPolicyConfig"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/site/stat": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get stat",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.GetStatResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/common/site/tos": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get Tos Content",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/result.ResponseSuccessBean"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.GetTosResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/notify/{platform}/{token}": {
+            "get": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "options": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "head": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "consumes": [
+                    "application/json",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Payment Notify",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "platform",
+                        "name": "platform",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/telegram/webhook": {
+            "post": {
+                "security": [
+                    {
+                        "TelegramSecret": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Telegram",
+                "parameters": [
+                    {
+                        "description": "Telegram Bot API update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/result.ResponseSuccessBean"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.Ads": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "start_time": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "target_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AuthConfig": {
+            "type": "object",
+            "properties": {
+                "device": {
+                    "$ref": "#/definitions/dto.DeviceAuthticateConfig"
+                },
+                "email": {
+                    "$ref": "#/definitions/dto.EmailAuthticateConfig"
+                },
+                "mobile": {
+                    "$ref": "#/definitions/dto.MobileAuthenticateConfig"
+                },
+                "register": {
+                    "$ref": "#/definitions/dto.PubilcRegisterConfig"
+                }
+            }
+        },
+        "dto.CheckUserResponse": {
+            "type": "object",
+            "properties": {
+                "exist": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.CheckVerificationCodeRequest": {
+            "type": "object",
+            "required": [
+                "account",
+                "code",
+                "method",
+                "type"
+            ],
+            "properties": {
+                "account": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "email",
+                        "mobile"
+                    ]
+                },
+                "type": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2
+                    ]
+                }
+            }
+        },
+        "dto.CheckVerificationCodeRespone": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.Currency": {
+            "type": "object",
+            "properties": {
+                "currency_symbol": {
+                    "type": "string"
+                },
+                "currency_unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DeviceAuthticateConfig": {
+            "type": "object",
+            "properties": {
+                "enable": {
+                    "type": "boolean"
+                },
+                "enable_security": {
+                    "type": "boolean"
+                },
+                "only_real_device": {
+                    "description": "Requires authenticated device transport, not hardware attestation.",
+                    "type": "boolean"
+                },
+                "show_ads": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.DeviceLoginRequest": {
+            "type": "object",
+            "required": [
+                "identifier"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "invite": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DownloadLink": {
+            "type": "object",
+            "properties": {
+                "android": {
+                    "type": "string"
+                },
+                "harmony": {
+                    "type": "string"
+                },
+                "ios": {
+                    "type": "string"
+                },
+                "linux": {
+                    "type": "string"
+                },
+                "mac": {
+                    "type": "string"
+                },
+                "windows": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.EmailAuthticateConfig": {
+            "type": "object",
+            "properties": {
+                "domain_suffix_list": {
+                    "type": "string"
+                },
+                "enable": {
+                    "type": "boolean"
+                },
+                "enable_domain_suffix": {
+                    "type": "boolean"
+                },
+                "enable_verify": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.GetAdsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Ads"
+                    }
+                }
+            }
+        },
+        "dto.GetGlobalConfigResponse": {
+            "type": "object",
+            "properties": {
+                "auth": {
+                    "$ref": "#/definitions/dto.AuthConfig"
+                },
+                "currency": {
+                    "$ref": "#/definitions/dto.Currency"
+                },
+                "invite": {
+                    "$ref": "#/definitions/dto.InviteConfig"
+                },
+                "oauth_methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "site": {
+                    "$ref": "#/definitions/dto.SiteConfig"
+                },
+                "subscribe": {
+                    "$ref": "#/definitions/dto.SubscribeConfig"
+                },
+                "verify": {
+                    "$ref": "#/definitions/dto.VeifyConfig"
+                },
+                "verify_code": {
+                    "$ref": "#/definitions/dto.PubilcVerifyCodeConfig"
+                },
+                "web_ad": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.GetStatResponse": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "integer"
+                },
+                "node": {
+                    "type": "integer"
+                },
+                "protocol": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.GetSubscribeClientResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SubscribeClient"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.GetTosResponse": {
+            "type": "object",
+            "properties": {
+                "tos_content": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.HeartbeatResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.InviteConfig": {
+            "type": "object",
+            "properties": {
+                "forced_invite": {
+                    "type": "boolean"
+                },
+                "only_first_purchase": {
+                    "type": "boolean"
+                },
+                "referral_percentage": {
+                    "type": "integer"
+                },
+                "withdrawal_method": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.MobileAuthenticateConfig": {
+            "type": "object",
+            "properties": {
+                "enable": {
+                    "type": "boolean"
+                },
+                "enable_whitelist": {
+                    "type": "boolean"
+                },
+                "whitelist": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.OAthLoginRequest": {
+            "type": "object",
+            "required": [
+                "method"
+            ],
+            "properties": {
+                "method": {
+                    "description": "google, facebook, apple, telegram, github etc.",
+                    "type": "string"
+                },
+                "redirect": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OAuthLoginGetTokenRequest": {
+            "type": "object",
+            "required": [
+                "callback",
+                "method"
+            ],
+            "properties": {
+                "callback": {},
+                "cf_token": {
+                    "type": "string"
+                },
+                "invite": {
+                    "type": "string"
+                },
+                "method": {
+                    "description": "google, facebook, apple, telegram, github etc.",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OAuthLoginResponse": {
+            "type": "object",
+            "properties": {
+                "redirect": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PrivacyPolicyConfig": {
+            "type": "object",
+            "properties": {
+                "privacy_policy": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PubilcRegisterConfig": {
+            "type": "object",
+            "properties": {
+                "enable_ip_register_limit": {
+                    "type": "boolean"
+                },
+                "ip_register_limit": {
+                    "type": "integer"
+                },
+                "ip_register_limit_duration": {
+                    "type": "integer"
+                },
+                "stop_register": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.PubilcVerifyCodeConfig": {
+            "type": "object",
+            "properties": {
+                "verify_code_interval": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 8
+                }
+            }
+        },
+        "dto.SendCodeRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "type"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2
+                    ]
+                }
+            }
+        },
+        "dto.SendCodeResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.SendSmsCodeRequest": {
+            "type": "object",
+            "required": [
+                "telephone",
+                "telephone_area_code",
+                "type"
+            ],
+            "properties": {
+                "telephone": {
+                    "type": "string"
+                },
+                "telephone_area_code": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2
+                    ]
+                }
+            }
+        },
+        "dto.SiteConfig": {
+            "type": "object",
+            "properties": {
+                "custom_data": {
+                    "type": "string"
+                },
+                "custom_html": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "keywords": {
+                    "type": "string"
+                },
+                "site_desc": {
+                    "type": "string"
+                },
+                "site_logo": {
+                    "type": "string"
+                },
+                "site_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SubscribeClient": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "download_link": {
+                    "$ref": "#/definitions/dto.DownloadLink"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "scheme": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SubscribeConfig": {
+            "type": "object",
+            "properties": {
+                "pan_domain": {
+                    "type": "boolean"
+                },
+                "profile_update_interval": {
+                    "type": "integer"
+                },
+                "profile_web_page_url": {
+                    "type": "string"
+                },
+                "show_tutorial": {
+                    "type": "boolean"
+                },
+                "single_model": {
+                    "type": "boolean"
+                },
+                "subscribe_domain": {
+                    "type": "string"
+                },
+                "subscribe_path": {
+                    "type": "string"
+                },
+                "user_agent_limit": {
+                    "type": "boolean"
+                },
+                "user_agent_list": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TelephoneCheckUserResponse": {
+            "type": "object",
+            "properties": {
+                "exist": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.TelephoneLoginRequest": {
+            "type": "object",
+            "required": [
+                "telephone",
+                "telephone_area_code"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "telephone": {
+                    "type": "string"
+                },
+                "telephone_area_code": {
+                    "type": "string"
+                },
+                "telephone_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TelephoneRegisterRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "telephone",
+                "telephone_area_code"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "invite": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 8
+                },
+                "telephone": {
+                    "type": "string"
+                },
+                "telephone_area_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TelephoneResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "telephone",
+                "telephone_area_code"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 8
+                },
+                "telephone": {
+                    "type": "string"
+                },
+                "telephone_area_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserLoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserRegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "cf_token": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "invite": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "minLength": 8
+                }
+            }
+        },
+        "dto.VeifyConfig": {
+            "type": "object",
+            "properties": {
+                "enable_login_verify": {
+                    "type": "boolean"
+                },
+                "enable_register_verify": {
+                    "type": "boolean"
+                },
+                "enable_reset_password_verify": {
+                    "type": "boolean"
+                },
+                "turnstile_site_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "result.ResponseSuccessBean": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "msg": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "NodeSecret": {
+            "type": "apiKey",
+            "name": "secret_key",
+            "in": "query"
+        },
+        "TelegramSecret": {
+            "type": "apiKey",
+            "name": "X-Telegram-Bot-Api-Secret-Token",
+            "in": "header"
+        }
+    }
+}

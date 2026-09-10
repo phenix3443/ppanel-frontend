@@ -82,10 +82,10 @@ sudo docker run hello-world
 
 ```bash
 # 拉取最新版本
-docker pull ppanel/ppanel:latest
+docker pull ppanel/ppanel-server:latest
 
-# 或拉取指定版本
-docker pull ppanel/ppanel:v0.1.2
+# 或锁定具体版本（标签格式 <版本>-<提交>，见 hub.docker.com/r/ppanel/ppanel-server/tags）
+docker pull ppanel/ppanel-server:1.15.20-23f8e345
 ```
 
 #### 步骤 2: 准备配置
@@ -99,15 +99,26 @@ mkdir -p ppanel-config
 # 创建配置文件
 cat > ppanel-config/ppanel.yaml <<EOF
 # PPanel 配置文件
-server:
-  host: 0.0.0.0
-  port: 8080
+Host: 0.0.0.0
+Port: 8080
 
-database:
-  type: sqlite
-  path: /app/data/ppanel.db
+JwtAuth:
+  AccessSecret: $(openssl rand -base64 32)
+  AccessExpire: 604800
 
-# 根据需要添加更多配置
+# PostgreSQL 与 Redis 都是必需的，Addr 填主机名或容器名，不能填 localhost
+Database:
+  Driver: postgres
+  Addr: postgres:5432
+  Username: ppanel
+  Password: your-password
+  Dbname: ppanel
+  Config: sslmode=disable&TimeZone=Asia%2FShanghai
+
+Redis:
+  Host: redis:6379
+  Pass: ''
+  DB: 0
 EOF
 ```
 
@@ -124,7 +135,7 @@ docker run -d \
   -v $(pwd)/ppanel-config:/app/etc:ro \
   -v ppanel-data:/app/data \
   --restart unless-stopped \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 ```
 
 **参数说明:**
@@ -153,17 +164,48 @@ curl http://localhost:8080
 #### 步骤 1: 创建 docker-compose.yml
 
 ```yaml
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: ppanel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ppanel
+      POSTGRES_USER: ppanel
+      POSTGRES_PASSWORD: your-password
+      TZ: Asia/Shanghai
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ppanel -d ppanel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: ppanel-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   ppanel:
-    image: ppanel/ppanel:latest
+    image: ppanel/ppanel-server:latest
     container_name: ppanel
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
       - ./ppanel-config:/app/etc:ro
-      - ppanel-data:/app/data
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
@@ -175,9 +217,13 @@ services:
       start_period: 40s
 
 volumes:
-  ppanel-data:
-    driver: local
+  postgres-data:
+  redis-data:
 ```
+
+::: warning 配置里的地址必须与服务名一致
+上面 `ppanel.yaml` 中的 `Addr: postgres:5432`、`Host: redis:6379` 对应这里的服务名。容器内的 `localhost` 指向容器自身，填 `localhost` 会导致连接被拒。`POSTGRES_PASSWORD` 也要与配置文件里 `Database.Password` 一致。
+:::
 
 #### 步骤 2: 准备配置
 
@@ -328,7 +374,7 @@ docker run --rm \
 
 ```bash
 # 拉取最新镜像
-docker pull ppanel/ppanel:latest
+docker pull ppanel/ppanel-server:latest
 
 # 停止并删除旧容器
 docker stop ppanel
@@ -341,7 +387,7 @@ docker run -d \
   -v $(pwd)/ppanel-config:/app/etc:ro \
   -v ppanel-data:/app/data \
   --restart unless-stopped \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 ```
 
 #### 使用 Docker Compose
@@ -377,7 +423,7 @@ curl http://localhost:8080
 uname -m
 
 # 查看镜像架构
-docker image inspect ppanel/ppanel:latest --format '{{.Architecture}}'
+docker image inspect ppanel/ppanel-server:latest --format '{{.Architecture}}'
 ```
 
 **查看日志:**
@@ -459,7 +505,7 @@ docker run -d \
   -v $(pwd)/ppanel-config:/app/etc:ro \
   -v ppanel-data:/app/data \
   --restart unless-stopped \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 ```
 
 ### 运行多个实例
@@ -473,7 +519,7 @@ docker run -d \
   -p 8081:8080 \
   -v $(pwd)/ppanel-config-1:/app/etc:ro \
   -v ppanel-data-1:/app/data \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 
 # 实例 2
 docker run -d \
@@ -481,7 +527,7 @@ docker run -d \
   -p 8082:8080 \
   -v $(pwd)/ppanel-config-2:/app/etc:ro \
   -v ppanel-data-2:/app/data \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 ```
 
 ### 自定义网络
@@ -499,7 +545,7 @@ docker run -d \
   -p 8080:8080 \
   -v $(pwd)/ppanel-config:/app/etc:ro \
   -v ppanel-data:/app/data \
-  ppanel/ppanel:latest
+  ppanel/ppanel-server:latest
 ```
 
 ## 下一步

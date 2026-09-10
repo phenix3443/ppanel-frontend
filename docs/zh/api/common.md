@@ -6,8 +6,6 @@ aside: false
 
 # 通用服务
 
-提供认证、工具等可复用接口，供用户端与管理端共同调用。Schema 直接来源于 GitHub 仓库，确保与后端版本保持一致。
+认证、工具等可复用接口已纳入聚合 API 文档。请使用统一的 API Explorer，以便与用户端、管理端、节点和边缘接口一起检索。
 
-<ClientOnly>
-  <ScalarIframe spec-url="https://raw.githubusercontent.com/perfect-panel/ppanel-docs/refs/heads/main/public/swagger/common.json" title="通用服务" />
-</ClientOnly>
+[打开 API 文档](./reference)

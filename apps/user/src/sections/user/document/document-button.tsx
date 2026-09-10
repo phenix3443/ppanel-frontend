@@ -6,11 +6,16 @@ import { buttonVariants } from "@workspace/ui/components/button";
 import { Markdown } from "@workspace/ui/composed/markdown";
 import { useOutsideClick } from "@workspace/ui/hooks/use-outside-click";
 import { cn } from "@workspace/ui/lib/utils";
-import { queryDocumentDetail } from "@workspace/ui/services/user/document";
+import {
+  getV1PublicDocumentDetail as queryDocumentDetail,
+  getV1PublicUserSubscribe as queryUserSubscribe,
+} from "@workspace/ui/services/user/user";
 import { formatDate } from "@workspace/ui/utils/formatting";
 import { AnimatePresence, motion } from "framer-motion";
 import { type RefObject, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useGlobalStore } from "@/stores/global";
+import { hasSubscriptionVariables } from "@/utils/subscription";
 import { CloseIcon } from "./close-icon";
 
 export function DocumentButton({ items }: { items: API.Document[] }) {
@@ -29,6 +34,72 @@ export function DocumentButton({ items }: { items: API.Document[] }) {
       return data.data?.content;
     },
   });
+
+  const { common, commonError, getUserSubscribe, isLoadingCommon } =
+    useGlobalStore();
+  const { data: userSubscriptions, isLoading: isLoadingSubscriptions } =
+    useQuery({
+      queryKey: ["queryUserSubscribe"],
+      queryFn: async () => {
+        const { data } = await queryUserSubscribe();
+        return data.data?.list || [];
+      },
+    });
+
+  const firstSubscribe = userSubscriptions?.[0];
+  const subscribeUrl = firstSubscribe
+    ? (getUserSubscribe(firstSubscribe.short, firstSubscribe.token)?.[0] ?? "")
+    : "";
+  const siteName = common.site?.site_name ?? "";
+  const documentContent = data || "";
+  const requiresSubscriptionUrl = hasSubscriptionVariables(documentContent);
+  const subscriptionConfigMessage = requiresSubscriptionUrl
+    ? isLoadingCommon || isLoadingSubscriptions
+      ? t("loadingSubscriptionConfig", "Loading subscription configuration...")
+      : commonError || (firstSubscribe && !subscribeUrl)
+        ? t(
+            "subscriptionConfigUnavailable",
+            "Subscription configuration is unavailable. Please refresh and try again."
+          )
+        : firstSubscribe
+          ? ""
+          : t("noSubscription", "Please purchase a subscription")
+    : "";
+
+  const fillVariables = (content: string) => {
+    if (!content) {
+      return "";
+    }
+    const hasSub = Boolean(subscribeUrl);
+    const purchaseHint = t("noSubscription", "Please purchase a subscription");
+    const toBase64 = (value: string) => {
+      try {
+        return btoa(value);
+      } catch {
+        return "";
+      }
+    };
+    return content
+      .replaceAll("{{subscribe_url}}", hasSub ? subscribeUrl : purchaseHint)
+      .replaceAll(
+        "{{subscribe_url_encoded}}",
+        hasSub ? encodeURIComponent(subscribeUrl) : ""
+      )
+      .replaceAll(
+        "{{subscribe_url_base64}}",
+        hasSub ? toBase64(subscribeUrl) : ""
+      )
+      .replaceAll(
+        "{{subscribe_url_qx}}",
+        hasSub
+          ? encodeURIComponent(
+              `{"server_remote":["${subscribeUrl}, tag=${siteName}"]}`
+            )
+          : ""
+      )
+      .replaceAll("{{site_name}}", siteName)
+      .replaceAll("{{site_name_encoded}}", encodeURIComponent(siteName));
+  };
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -89,7 +160,13 @@ export function DocumentButton({ items }: { items: API.Document[] }) {
               layoutId={`card-${active.id}-${id}`}
               ref={ref}
             >
-              <Markdown>{data || ""}</Markdown>
+              {subscriptionConfigMessage ? (
+                <div className="m-auto text-center text-muted-foreground">
+                  {subscriptionConfigMessage}
+                </div>
+              ) : (
+                <Markdown>{fillVariables(documentContent)}</Markdown>
+              )}
             </motion.div>
           </div>
         ) : null}

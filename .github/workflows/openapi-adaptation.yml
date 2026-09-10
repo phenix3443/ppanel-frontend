@@ -1,0 +1,52 @@
+name: openapi-adaptation
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Verify delivery without starting the automation agent
+        required: true
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - 'docs/public/swagger/*.json'
+
+permissions:
+  contents: read
+
+jobs:
+  notify-automation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted develop automation
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+
+      - name: Collect OpenAPI adaptation context
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+        run: node scripts/openapi-adaptation-context.mjs
+
+      - name: Send openapi.adapt webhook to bridge
+        env:
+          AUTOMATION_WEBHOOK_URL: ${{ secrets.AUTOMATION_WEBHOOK_URL }}
+          AUTOMATION_WEBHOOK_SECRET: ${{ secrets.AUTOMATION_WEBHOOK_SECRET }}
+          AUTOMATION_EVENT_TYPE: openapi.adapt
+          AUTOMATION_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_ACTION: ${{ github.event.action || '' }}
+          GITHUB_DELIVERY: ${{ github.run_id }}-${{ github.run_attempt }}
+          WEBHOOK_RETRY_DELAY_MS: "1000"
+        run: node scripts/triage-webhook.mjs

@@ -2,7 +2,14 @@ import type { protocols } from "./constants";
 
 export type FieldConfig = {
   name: string;
-  type: "input" | "select" | "switch" | "number" | "textarea";
+  type:
+    | "input"
+    | "select"
+    | "switch"
+    | "number"
+    | "textarea"
+    | "string-list"
+    | "json";
   label: string;
   required?: boolean;
   placeholder?: string;
@@ -13,13 +20,19 @@ export type FieldConfig = {
   step?: number;
   suffix?: string;
   generate?: {
-    function?: () =>
+    // Receives the protocol being edited so a generator can depend on a
+    // sibling field, e.g. the Shadowsocks 2022 key length follows the cipher.
+    function?: (
+      protocol?: any
+    ) =>
       | Promise<string | Record<string, string>>
       | string
       | Record<string, string>;
     functions?: {
       label: string;
-      function: () =>
+      function: (
+        protocol?: any
+      ) =>
         | Promise<string | Record<string, string>>
         | string
         | Record<string, string>;

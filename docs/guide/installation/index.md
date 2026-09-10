@@ -8,7 +8,6 @@ PPanel supports multiple deployment methods to suit different needs and environm
 
 The easiest and most reliable way to deploy PPanel. Docker ensures consistent environments and simplifies updates.
 
-- **[Docker Run](/guide/installation/docker-run)** - Quick deployment with a single command
 - **[Docker Compose](/guide/installation/docker-compose)** - Production-ready deployment with better management
 
 ### Traditional Deployment

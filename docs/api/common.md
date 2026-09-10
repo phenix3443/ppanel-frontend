@@ -6,8 +6,6 @@ aside: false
 
 # Common Service
 
-Shared endpoints (authentication, utilities, helpers) that are reused across both the admin and user panels. The schema is served directly from GitHub so it always reflects the latest backend implementation.
+Shared endpoints (authentication, utilities, helpers) are included in the aggregate API reference. Use the single explorer so Common, User, Admin, Node, and Edge endpoints stay searchable together.
 
-<ClientOnly>
-  <ScalarIframe spec-url="https://raw.githubusercontent.com/perfect-panel/ppanel-docs/refs/heads/main/public/swagger/common.json" title="Common Service" />
-</ClientOnly>
+[Open the API Reference](./reference)

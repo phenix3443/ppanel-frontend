@@ -8,16 +8,31 @@
     <script>
     "use strict";
 
-    // Providers redirect to a path without URL fragments (#). Our app uses hash routing.
-    // Bridge /oauth/<provider>[/]?... -> /#/oauth/<provider>?...
+    // Providers redirect to a path without URL fragments (#). Our app uses hash
+    // routing, so bridge /oauth/<provider>[/] -> /#/oauth/<provider>?<params>.
+    //
+    // Telegram returns its signed result in the fragment (#tgAuthResult=...)
+    // rather than the query string, and the fragment is exactly what the hash
+    // router consumes, so it has to be folded into the query here. Query values
+    // win: an explicit parameter is the more trustworthy source.
     (() => {
       try {
-        let path = window.location.pathname || "/";
-        path = path.replace(/\/$/, "");
+        const path = (window.location.pathname ?? "/").replace(/\/$/, "");
+        const params = new URLSearchParams();
+        const hash = window.location.hash.replace(/^#/, "");
 
-        const search = window.location.search || "";
-        const target = `/#${path}${search}`;
-        window.location.replace(target);
+        // Ignore a hash that is already a route rather than a parameter list.
+        if (hash?.includes("=") && !hash.startsWith("/")) {
+          new URLSearchParams(hash).forEach((value, key) => {
+            params.set(key, value);
+          });
+        }
+        new URLSearchParams(window.location.search).forEach((value, key) => {
+          params.set(key, value);
+        });
+
+        const query = params.toString();
+        window.location.replace(`/#${path}${query ? `?${query}` : ""}`);
       } catch (_e) {
         window.location.replace("/#/auth");
       }

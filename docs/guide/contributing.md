@@ -59,7 +59,7 @@ onMounted(async () => {
 
   // Fetch contributors from frontend related repositories
   try {
-    const repos = ['frontend', 'ppanel-web', 'ppanel-docs']
+    const repos = ['frontend', 'backend']
     const contributorsMap = new Map()
 
     for (const repo of repos) {
