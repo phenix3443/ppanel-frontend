@@ -24,6 +24,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@workspace/ui/components/dialog";
 import { Separator } from "@workspace/ui/components/separator";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { Icon } from "@workspace/ui/composed/icon";
@@ -543,22 +550,57 @@ export default function Content() {
                                             </Button>
                                           </CopyToClipboard>
                                         )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              <div className="hidden size-full flex-col items-center justify-between gap-2 text-muted-foreground text-sm lg:flex">
-                                <span>{t("qrCode", "QR Code")}</span>
-                                <QRCodeCanvas
-                                  bgColor="transparent"
-                                  fgColor="rgb(59, 130, 246)"
-                                  size={80}
-                                  value={url}
-                                />
-                                <span className="text-center">
-                                  {t("scanToSubscribe", "Scan to Subscribe")}
-                                </span>
                               </div>
+                            </div>
+                          );
+                        })}
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <button
+                                    className="hidden size-full flex-col items-center justify-between gap-2 rounded-md border border-transparent text-muted-foreground text-sm transition-colors hover:border-border hover:bg-accent/30 lg:flex"
+                                    type="button"
+                                  >
+                                    <span>{t("qrCode", "QR Code")}</span>
+                                    <QRCodeCanvas
+                                      bgColor="#ffffff"
+                                      fgColor="rgb(59, 130, 246)"
+                                      includeMargin
+                                      level="M"
+                                      size={128}
+                                      value={url}
+                                    />
+                                    <span className="text-center">
+                                      {t(
+                                        "scanToSubscribe",
+                                        "Scan to Subscribe"
+                                      )}
+                                    </span>
+                                  </button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      {t("qrCode", "QR Code")}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <div className="flex flex-col items-center gap-4">
+                                    <QRCodeCanvas
+                                      bgColor="#ffffff"
+                                      fgColor="rgb(59, 130, 246)"
+                                      includeMargin
+                                      level="M"
+                                      size={256}
+                                      value={url}
+                                    />
+                                    <p className="text-center text-muted-foreground text-sm">
+                                      {t(
+                                        "scanToSubscribe",
+                                        "Scan to Subscribe"
+                                      )}
+                                    </p>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
                             </div>
                           </AccordionContent>
                         </AccordionItem>
