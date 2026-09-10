@@ -12,7 +12,10 @@ import {
   DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import { Separator } from "@workspace/ui/components/separator";
-import { preCreateOrder, renewal } from "@workspace/ui/services/user/order";
+import {
+  postV1PublicOrderPre as preCreateOrder,
+  postV1PublicOrderRenewal as renewal,
+} from "@workspace/ui/services/user/user";
 import { LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,9 +29,14 @@ import { SubscribeDetail } from "./detail";
 interface RenewalProps {
   id: number;
   subscribe: API.Subscribe;
+  className?: string;
 }
 
-export default function Renewal({ id, subscribe }: Readonly<RenewalProps>) {
+export default function Renewal({
+  id,
+  subscribe,
+  className,
+}: Readonly<RenewalProps>) {
   const { t } = useTranslation("subscribe");
   const { getUserInfo } = useGlobalStore();
   const navigate = useNavigate();
@@ -113,7 +121,9 @@ export default function Renewal({ id, subscribe }: Readonly<RenewalProps>) {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button size="sm">{t("renew", "Renew")}</Button>
+        <Button className={className} size={className ? "default" : "sm"}>
+          {t("renew", "Renew")}
+        </Button>
       </DialogTrigger>
       <DialogContent className="flex h-full flex-col overflow-y-auto md:h-auto md:max-w-screen-lg">
         <DialogHeader>

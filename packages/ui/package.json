@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "biome lint",
     "check": "biome check",
+    "test": "vitest run",
     "openapi": "openapi2ts"
   },
   "dependencies": {
@@ -13,7 +14,15 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
+    "@iconify-icons/flat-color-icons": "^2.0.0",
+    "@iconify-icons/logos": "^2.0.0",
+    "@iconify-icons/lucide": "^2.0.2",
+    "@iconify-icons/mdi": "^2.0.0",
+    "@iconify-icons/simple-icons": "^2.0.0",
+    "@iconify-icons/tabler": "^2.0.0",
+    "@iconify-icons/uil": "^2.0.0",
     "@iconify/react": "^6.0.2",
+    "@lottiefiles/dotlottie-react": "^0.17.7",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -55,7 +64,6 @@
     "i18next-http-backend": "^3.0.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.554.0",
-    "mathjs": "^15.1.0",
     "monaco-editor": "^0.55.1",
     "monaco-themes": "^0.4.7",
     "motion": "^12.23.24",
@@ -92,7 +100,8 @@
     "@umijs/openapi": "^1.14.1",
     "@workspace/typescript-config": "workspace:*",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.0.5"
   },
   "exports": {
     "./globals.css": "./src/styles/globals.css",

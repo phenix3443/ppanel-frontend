@@ -1,5 +1,4 @@
-export const fallbackLng = "en-US";
-export const supportedLngs = ["en-US", "zh-CN"];
+export * from "./i18n";
 
 export const CDN_URL =
   import.meta.env.VITE_CDN_URL || "https://cdn.jsdmirror.com";

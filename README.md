@@ -22,7 +22,6 @@ English
 
 [![][github-release-shield]][github-release-link]
 [![][github-releasedate-shield]][github-releasedate-link]
-[![][github-action-test-shield]][github-action-test-link]
 [![][github-action-release-shield]][github-action-release-link]<br/>
 [![][github-contributors-shield]][github-contributors-link]
 [![][github-forks-shield]][github-forks-link]
@@ -100,28 +99,26 @@ This project is [GNU](../../LICENSE) licensed.
 <!-- LINK GROUP -->
 
 [back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
-[codespaces-link]: https://codespaces.new/perfect-panel/ppanel-web
+[codespaces-link]: https://codespaces.new/perfect-panel/frontend
 [codespaces-shield]: https://github.com/codespaces/badge.svg
-[contributors-contrib]: https://contrib.rocks/image?repo=perfect-panel/ppanel-web
+[contributors-contrib]: https://contrib.rocks/image?repo=perfect-panel/frontend
 [contributors-url]: https://github.com/perfect-panel/frontend/graphs/contributors
 [github-action-release-link]: https://github.com/perfect-panel/frontend/actions/workflows/release.yml
-[github-action-release-shield]: https://img.shields.io/github/actions/workflow/status/perfect-panel/ppanel-web/release.yml?label=release&labelColor=black&logo=githubactions&logoColor=white&style=flat-square
-[github-action-test-link]: https://github.com/perfect-panel/frontend/actions/workflows/test.yml
-[github-action-test-shield]: https://img.shields.io/github/actions/workflow/status/perfect-panel/ppanel-web/test.yml?label=test&labelColor=black&logo=githubactions&logoColor=white&style=flat-square
+[github-action-release-shield]: https://img.shields.io/github/actions/workflow/status/perfect-panel/frontend/release.yml?label=release&labelColor=black&logo=githubactions&logoColor=white&style=flat-square
 [github-contributors-link]: https://github.com/perfect-panel/frontend/graphs/contributors
-[github-contributors-shield]: https://img.shields.io/github/contributors/perfect-panel/ppanel-web?color=c4f042&labelColor=black&style=flat-square
+[github-contributors-shield]: https://img.shields.io/github/contributors/perfect-panel/frontend?color=c4f042&labelColor=black&style=flat-square
 [github-forks-link]: https://github.com/perfect-panel/frontend/network/members
-[github-forks-shield]: https://img.shields.io/github/forks/perfect-panel/ppanel-web?color=8ae8ff&labelColor=black&style=flat-square
+[github-forks-shield]: https://img.shields.io/github/forks/perfect-panel/frontend?color=8ae8ff&labelColor=black&style=flat-square
 [github-issues-link]: https://github.com/perfect-panel/frontend/issues
-[github-issues-shield]: https://img.shields.io/github/issues/perfect-panel/ppanel-web?color=ff80eb&labelColor=black&style=flat-square
-[github-license-link]: https://github.com/perfect-panel/frontend/blob/master/LICENSE
-[github-license-shield]: https://img.shields.io/github/license/perfect-panel/ppanel-web?color=white&labelColor=black&style=flat-square
+[github-issues-shield]: https://img.shields.io/github/issues/perfect-panel/frontend?color=ff80eb&labelColor=black&style=flat-square
+[github-license-link]: https://github.com/perfect-panel/frontend/blob/main/LICENSE
+[github-license-shield]: https://img.shields.io/github/license/perfect-panel/frontend?color=white&labelColor=black&style=flat-square
 [github-release-link]: https://github.com/perfect-panel/frontend/releases
-[github-release-shield]: https://img.shields.io/github/v/release/perfect-panel/ppanel-web?style=flat-square&sort=semver&logo=github
+[github-release-shield]: https://img.shields.io/github/v/release/perfect-panel/frontend?style=flat-square&sort=semver&logo=github
 [github-releasedate-link]: https://github.com/perfect-panel/frontend/releases
-[github-releasedate-shield]: https://img.shields.io/github/release-date/perfect-panel/ppanel-web?labelColor=black&style=flat-square
+[github-releasedate-shield]: https://img.shields.io/github/release-date/perfect-panel/frontend?labelColor=black&style=flat-square
 [github-stars-link]: https://github.com/perfect-panel/frontend/network/stargazers
-[github-stars-shield]: https://img.shields.io/github/stars/perfect-panel/ppanel-web?color=ffcb47&labelColor=black&style=flat-square
+[github-stars-shield]: https://img.shields.io/github/stars/perfect-panel/frontend?color=ffcb47&labelColor=black&style=flat-square
 [gitpod-link]: https://gitpod.io/#https://github.com/perfect-panel/frontend
 [issues-link]: https://github.com/perfect-panel/frontend/issues/new/choose
 [pr-welcome-link]: https://github.com/perfect-panel/frontend/pulls

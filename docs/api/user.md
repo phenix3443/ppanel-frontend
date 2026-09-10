@@ -6,8 +6,6 @@ aside: false
 
 # User Service
 
-Endpoints for the customer-facing portal: subscriptions, orders, tickets, wallets, and profile management.
+Customer-facing endpoints for subscriptions, orders, tickets, wallets, and profile management are included in the aggregate API reference.
 
-<ClientOnly>
-  <ScalarIframe spec-url="https://raw.githubusercontent.com/perfect-panel/ppanel-docs/refs/heads/main/public/swagger/user.json" title="User Service" />
-</ClientOnly>
+[Open the API Reference](./reference)

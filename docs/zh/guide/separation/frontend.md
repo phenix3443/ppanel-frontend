@@ -2,6 +2,23 @@
 
 本指南将帮助您独立部署 PPanel 前端应用，连接到已部署的后端服务。
 
+## 迁移旧网关部署
+
+后端 1.20.2 已移除网关注册和网关管理的升级功能。前端应连接后端的 `/v1`、`/v2` 路由。管理后台改用 `/v1/admin/tool/version` 获取版本，不再调用 `/basic/*` 或 `/v1/admin/system/module`。
+
+同域部署时，构建前端的配置保持为空：
+
+```sh
+VITE_API_BASE_URL=
+VITE_API_PREFIX=
+```
+
+生产环境由反向代理将 `/v1/`、`/v2/` 转发到后端。使用独立 API 域名时，将 `VITE_API_BASE_URL` 设置为后端的公开地址，并在后端允许前端域名的跨域请求。
+
+`VITE_API_PREFIX` 仍可用于自定义反向代理。如果设置为 `/api`，代理必须把 `/api/v1/...` 转发成 `/v1/...`，把 `/api/v2/...` 转发成 `/v2/...`；这不需要旧网关服务。Vite 开发代理会去掉该前缀，未配置 API 地址时默认连接 `http://127.0.0.1:8080`。
+
+这些配置在构建时生效，修改后需要重新构建并部署管理端和用户端。旧网关部署还需设置后端的 `Host`、`Port`，并更新代理的上游地址；后端不再向网关注册地址，也不再读取 `PPANEL_PORT`。
+
 ## 概述
 
 前端分离部署允许您将 PPanel 前端应用部署在独立的服务器或 CDN 上，通过 API 与后端服务通信。
@@ -221,20 +238,24 @@ netlify deploy --prod --dir=dist
 
 **管理端**：
 - **Framework preset**: None
-- **Build command**: `cd .. && bun install && cd apps/admin && bun run build`
+- **Build command**: `bun install && bun --filter ppanel-admin-web build`
 - **Build output directory**: `apps/admin/dist`
-- **Root directory**: `apps/admin`
+- **Root directory**：留空（仓库根目录）
 
 **用户端**：
 - **Framework preset**: None
-- **Build command**: `cd .. && bun install && cd apps/user && bun run build`
+- **Build command**: `bun install && bun --filter ppanel-user-web build`
 - **Build output directory**: `apps/user/dist`
-- **Root directory**: `apps/user`
+- **Root directory**：留空（仓库根目录）
+
+必须以仓库根目录作为 Pages 项目根目录，Cloudflare 才会部署共用的
+`/functions` 目录，用它代理 `/v1/*` 请求。
 
 #### 3. 配置环境变量
 
 在 Settings → Environment variables 中添加：
-- `VITE_API_BASE_URL`
+- `API_BASE_URL`：Pages Function 使用的后端 API 源站，例如
+  `https://api.your-domain.com`
 - `VITE_CDN_URL`
 
 ## 自建服务器部署

@@ -6,8 +6,6 @@ aside: false
 
 # Admin Service
 
-Administrative endpoints that power the dashboard, operations, commerce, user management, and analytics modules.
+Administrative endpoints for the dashboard, operations, commerce, user management, and analytics modules are included in the aggregate API reference.
 
-<ClientOnly>
-  <ScalarIframe spec-url="https://raw.githubusercontent.com/perfect-panel/ppanel-docs/refs/heads/main/public/swagger/admin.json" title="Admin Service" />
-</ClientOnly>
+[Open the API Reference](./reference)

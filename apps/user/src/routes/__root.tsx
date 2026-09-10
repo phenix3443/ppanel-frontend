@@ -5,119 +5,76 @@ import { Toaster } from "@workspace/ui/components/sonner";
 import { NavigationProgress } from "@workspace/ui/composed/navigation-progress";
 import { TanStackQueryDevtools } from "@workspace/ui/integrations/tanstack-query-devtools";
 import { getCookie } from "@workspace/ui/lib/cookies";
-import { getGlobalConfig } from "@workspace/ui/services/common/common";
 import { isBrowser } from "@workspace/ui/utils/index";
 import { useEffect } from "react";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+import { toast } from "sonner";
 import { useGlobalStore } from "@/stores/global";
-
-function syncDocumentHead({
-  title,
-  description,
-  keywords,
-  canonicalUrl,
-  iconHref,
-}: {
-  title: string;
-  description?: string;
-  keywords?: string;
-  canonicalUrl?: string;
-  iconHref?: string;
-}) {
-  document.title = title;
-
-  const upsertMeta = (name: string, content?: string) => {
-    let element = document.head.querySelector<HTMLMetaElement>(
-      `meta[name="${name}"]`
-    );
-
-    if (!content) {
-      element?.remove();
-      return;
-    }
-
-    if (!element) {
-      element = document.createElement("meta");
-      element.name = name;
-      document.head.appendChild(element);
-    }
-
-    element.content = content;
-  };
-
-  const upsertLink = (rel: string, href?: string) => {
-    let element = document.head.querySelector<HTMLLinkElement>(
-      `link[rel="${rel}"]`
-    );
-
-    if (!href) {
-      element?.remove();
-      return;
-    }
-
-    if (!element) {
-      element = document.createElement("link");
-      element.rel = rel;
-      document.head.appendChild(element);
-    }
-
-    element.href = href;
-  };
-
-  upsertMeta("description", description);
-  upsertMeta("keywords", keywords);
-  upsertLink("canonical", canonicalUrl);
-  upsertLink("icon", iconHref);
-  upsertLink("apple-touch-icon", iconHref);
-}
+import { fetchInitialConfig } from "@/utils/bootstrap";
 
 export const Route = createRootRouteWithContext()({
   component: () => {
-    const { common, setCommon, setCommonReady, getUserInfo } = useGlobalStore();
+    const {
+      clearUserLoading,
+      common,
+      getUserInfo,
+      setCommon,
+      setCommonError,
+      setCommonReady,
+    } = useGlobalStore();
     useEffect(() => {
       const initializeApp = async () => {
         try {
-          const configResponse = await getGlobalConfig();
-          if (configResponse.data?.data) {
-            setCommon(configResponse.data.data);
-          }
-          try {
-            if (getCookie("Authorization")) {
-              await getUserInfo();
-            }
-          } catch {
-            /* empty */
-          }
+          const config = await fetchInitialConfig();
+          setCommon(config);
         } catch (error) {
           console.error("Failed to initialize app:", error);
+          setCommonError(
+            error instanceof Error
+              ? error.message
+              : "Unknown configuration error"
+          );
+          toast.error(
+            "Failed to load site configuration. Please refresh and try again."
+          );
         } finally {
+          // 【成功失败都要置位】auth 页靠 commonReady 决定何时渲染登录方式。
+          // 只在成功分支置位的话，配置加载失败会让登录页永远停在骨架屏。
           setCommonReady(true);
+        }
+
+        try {
+          if (getCookie("Authorization")) {
+            await getUserInfo();
+          } else {
+            clearUserLoading();
+          }
+        } catch {
+          clearUserLoading();
         }
       };
 
       initializeApp();
-    }, [getUserInfo, setCommon, setCommonReady]);
+    }, []);
 
     const { site } = common;
-    const title = site.site_name || "Perfect Panel";
-    const description = site.site_desc || title;
+    const title = site.site_name || "Loading...";
+    const description = site.site_desc || "";
     const keywords = site.keywords || "";
     const logo = site.site_logo || "";
     const url = isBrowser() ? window.location.href : "";
 
-    useEffect(() => {
-      if (!isBrowser()) return;
-
-      syncDocumentHead({
-        title,
-        description,
-        keywords,
-        canonicalUrl: url,
-        iconHref: logo,
-      });
-    }, [description, keywords, logo, title, url]);
-
     return (
-      <>
+      <HelmetProvider>
+        <Helmet>
+          <title>{title}</title>
+          <meta content={description} name="description" />
+          <meta content={keywords} name="keywords" />
+          <link href={url} rel="canonical" />
+          <link href={logo} rel="icon" />
+          <link href={logo} rel="apple-touch-icon" sizes="180x180" />
+          <link href="/site.webmanifest" rel="manifest" />
+        </Helmet>
         <NavigationProgress />
         <Outlet />
         <Toaster closeButton richColors />
@@ -125,21 +82,19 @@ export const Route = createRootRouteWithContext()({
           dangerouslySetInnerHTML={{ __html: common?.site.custom_html || "" }}
           id="custom_html"
         />
-        {import.meta.env.DEV ? (
-          <TanStackDevtools
-            config={{
-              position: "bottom-left",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        ) : null}
-      </>
+        <TanStackDevtools
+          config={{
+            position: "bottom-right",
+          }}
+          plugins={[
+            {
+              name: "Tanstack Router",
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
+      </HelmetProvider>
     );
   },
 });

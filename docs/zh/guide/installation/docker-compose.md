@@ -73,14 +73,61 @@ cd ~/ppanel
 
 创建 `docker-compose.yml` 文件，内容如下：
 
-```yaml
-version: '3.8'
+创建 `.env` 文件保存数据库密码，避免明文写进 compose 文件：
 
+```bash
+cat > .env <<EOF
+POSTGRES_PASSWORD=$(openssl rand -base64 16)
+EOF
+```
+
+`docker-compose.yml` 内容如下：
+
+```yaml
 services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: ppanel-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ppanel
+      POSTGRES_USER: ppanel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ppanel-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ppanel -d ppanel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: ppanel-redis
+    restart: always
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - ppanel-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   ppanel-service:
-    image: ppanel/ppanel:latest
+    image: ppanel/ppanel-server:latest
     container_name: ppanel-service
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
@@ -98,25 +145,39 @@ services:
 networks:
   ppanel-net:
     driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
 ```
 
 **配置说明:**
 
-- **image**: 使用的 Docker 镜像（latest 或指定版本如 `v0.1.2`）
+- **image**: 使用的 Docker 镜像，支持 amd64/arm64。生产环境建议锁定具体版本而非 `latest`，标签格式为 `<版本>-<提交>`，例如 `ppanel/ppanel-server:1.15.20-23f8e345`，可用标签见 [Docker Hub](https://hub.docker.com/r/ppanel/ppanel-server/tags)
 - **container_name**: 设置自定义容器名称
 - **ports**: 将容器的 8080 端口映射到宿主机的 8080 端口（可根据需要修改宿主机端口）
 - **volumes**:
   - `./config:/app/etc:ro` - 配置目录（只读）
   - `./web:/app/static` - 静态文件目录（管理后台和用户前端）
-- **networks**: 创建自定义网络以实现服务隔离
+  - `postgres-data` / `redis-data` - 命名卷，用于持久化数据库数据
+- **networks**: 创建自定义网络，三个服务通过服务名（`postgres`、`redis`）互相访问
+- **depends_on**: 等数据库与 Redis 健康检查通过后再启动面板
 - **restart**: 自动重启策略（always 表示总是重启）
 - **healthcheck**: 服务健康检查
+
+::: tip 数据库只在内部网络暴露
+`postgres` 与 `redis` 都没有映射到宿主机端口，只有同一网络内的容器能访问。如需从宿主机连接调试，再自行添加 `ports`。
+:::
 
 ### 步骤 3: 准备配置
 
 ```bash
 # 创建配置目录
 mkdir -p config
+
+# 读取上一步生成的数据库密码，并生成 JWT 密钥
+source .env
+ACCESS_SECRET=$(openssl rand -base64 32)
 
 # 创建配置文件
 cat > config/ppanel.yaml <<EOF
@@ -139,7 +200,7 @@ Static:
     Path: ./static/user
 
 JwtAuth:
-    AccessSecret: your-secret-key-change-this
+    AccessSecret: $ACCESS_SECRET
     AccessExpire: 604800
 
 Logger:
@@ -159,28 +220,28 @@ Logger:
     Rotation: daily
     FileTimeFormat: 2006-01-02T15:04:05.000Z07:00
 
-MySQL:
-    Addr: localhost:3306
-    Username: your-username
-    Password: your-password
+Database:
+    Driver: postgres
+    Addr: postgres:5432
+    Username: ppanel
+    Password: $POSTGRES_PASSWORD
     Dbname: ppanel
-    Config: charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+    Config: sslmode=disable&TimeZone=Asia%2FShanghai
     MaxIdleConns: 10
     MaxOpenConns: 10
     SlowThreshold: 1000
 
 Redis:
-    Host: localhost:6379
-    Pass: your-redis-password
+    Host: redis:6379
+    Pass: ''
     DB: 0
 EOF
 ```
 
-::: warning 必需配置
-**MySQL 和 Redis 是必需的。** 部署前请配置以下项：
-- `JwtAuth.AccessSecret` - 使用强随机密钥（必需）
-- `MySQL.*` - 配置你的 MySQL 数据库连接（必需）
-- `Redis.*` - 配置你的 Redis 连接（必需）
+::: warning 地址必须使用服务名，而不是 localhost
+`Addr: postgres:5432` 和 `Host: redis:6379` 里的 `postgres`、`redis` 是 compose 中的服务名。容器内的 `localhost` 指向容器自身，填 `localhost` 会导致连接被拒。
+
+如果你使用外部数据库（而非上面 compose 里的容器），把地址换成对应的主机名或 IP，并从 `docker-compose.yml` 中删除 `postgres` / `redis` 两个服务及其 `depends_on`。
 :::
 
 ### 步骤 4: 启动服务
@@ -323,11 +384,9 @@ docker compose down -v
 
 ## 升级
 
-直接从**管理后台**主页升级 PPanel。在仪表盘主页可以检查新版本并一键升级。
+在 Compose 配置中更新后端镜像标签，拉取该镜像并重建后端服务。保留配置文件和数据库备份，前端版本需单独部署。
 
-::: tip 提示
-系统会自动处理升级过程，包括拉取新镜像和重启服务。
-:::
+管理后台保留版本展示和后端重启功能。后端 1.20.2 已移除网关管理的升级功能，旧网关部署应先[迁移前端 API 路由](/zh/guide/separation/frontend#迁移旧网关部署)，再升级后端。
 
 ## 高级配置
 

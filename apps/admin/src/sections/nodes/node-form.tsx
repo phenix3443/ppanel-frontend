@@ -75,6 +75,11 @@ const buildSchema = (t: TFunction) =>
 
 export type NodeFormValues = z.infer<ReturnType<typeof buildSchema>>;
 
+function normalizeValues(v?: Partial<NodeFormValues>): Partial<NodeFormValues> {
+  if (!v) return {};
+  return { ...v, tags: Array.isArray(v.tags) ? v.tags : [] };
+}
+
 export default function NodeForm(props: {
   trigger: string;
   title: string;
@@ -103,7 +108,7 @@ export default function NodeForm(props: {
     });
   };
 
-  const form = useForm<NodeFormValues>({
+  const form = useForm<NodeFormValues, any, NodeFormValues>({
     resolver: zodResolver(Scheme),
     defaultValues: {
       name: "",
@@ -112,7 +117,7 @@ export default function NodeForm(props: {
       address: "",
       port: 0,
       tags: [],
-      ...initialValues,
+      ...normalizeValues(initialValues),
     },
   });
 
@@ -134,7 +139,7 @@ export default function NodeForm(props: {
         address: "",
         port: 0,
         tags: [],
-        ...initialValues,
+        ...normalizeValues(initialValues),
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -241,7 +246,15 @@ export default function NodeForm(props: {
       <SheetTrigger asChild>
         <Button
           onClick={() => {
-            form.reset();
+            form.reset({
+              name: "",
+              server_id: undefined,
+              protocol: "",
+              address: "",
+              port: 0,
+              tags: [],
+              ...normalizeValues(initialValues),
+            });
             setAutoFilledFields(new Set());
           }}
         >

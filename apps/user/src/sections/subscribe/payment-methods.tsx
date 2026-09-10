@@ -7,7 +7,7 @@ import {
   RadioGroupItem,
 } from "@workspace/ui/components/radio-group";
 import { cn } from "@workspace/ui/lib/utils";
-import { getAvailablePaymentMethods } from "@workspace/ui/services/user/portal";
+import { getV1PublicPortalPaymentMethod as getAvailablePaymentMethods } from "@workspace/ui/services/user/user";
 import type React from "react";
 import { memo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 interface PaymentMethodsProps {
   value: number;
   onChange: (value: number) => void;
+  onAvailableMethodsChange?: (count: number) => void;
   balance?: boolean;
 }
 
@@ -22,6 +23,7 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   value,
   onChange,
   balance = true,
+  onAvailableMethodsChange,
 }) => {
   const { t } = useTranslation("subscribe");
 
@@ -45,6 +47,11 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
     const preferred = data.find((m) => m.id !== -1)?.id ?? data[0]!.id;
     onChange(preferred);
   }, [data, onChange, value]);
+
+  useEffect(() => {
+    onAvailableMethodsChange?.(data?.length ?? 0);
+  }, [data, onAvailableMethodsChange]);
+
   return (
     <>
       <div className="font-semibold">
@@ -67,7 +74,9 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
             <Label
               className={cn(
                 "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover py-2 text-popover-foreground hover:bg-accent hover:text-accent-foreground",
-                String(value) === String(item.id) ? "border-primary bg-primary/10 text-foreground" : ""
+                String(value) === String(item.id)
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : ""
               )}
               htmlFor={String(item.id)}
             >

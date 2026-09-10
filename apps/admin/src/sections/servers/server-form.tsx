@@ -43,8 +43,8 @@ import { Switch } from "@workspace/ui/components/switch";
 import { EnhancedInput } from "@workspace/ui/composed/enhanced-input";
 import { Icon } from "@workspace/ui/composed/icon";
 import { cn } from "@workspace/ui/lib/utils";
-import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { type ReactNode, useEffect, useState } from "react";
+import { type Resolver, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useNode } from "@/stores/node";
@@ -80,6 +80,50 @@ function getVisibleRequiredFields(
       field.required && (!field.condition || field.condition(protocolData, {}))
   );
 }
+
+function normalizeMultiplexValue(
+  protocolType: ProtocolType,
+  value: unknown,
+  fallback: unknown
+) {
+  const raw = String(value || fallback || "").trim();
+  if (protocolType !== "mieru") {
+    return raw || "none";
+  }
+
+  switch (raw.toUpperCase()) {
+    case "NONE":
+    case "OFF":
+    case "MULTIPLEXING_OFF":
+      return "MULTIPLEXING_OFF";
+    case "":
+    case "LOW":
+    case "MULTIPLEXING_LOW":
+      return "MULTIPLEXING_LOW";
+    case "MIDDLE":
+    case "MEDIUM":
+    case "MULTIPLEXING_MIDDLE":
+      return "MULTIPLEXING_MIDDLE";
+    case "HIGH":
+    case "MULTIPLEXING_HIGH":
+      return "MULTIPLEXING_HIGH";
+    default:
+      return raw;
+  }
+}
+
+const PRESERVED_HIDDEN_PROTOCOL_FIELDS = new Set([
+  "server_key",
+  "reality_private_key",
+  "reality_public_key",
+  "reality_short_id",
+  "encryption_ticket",
+  "encryption_server_padding",
+  "encryption_private_key",
+  "encryption_client_padding",
+  "encryption_password",
+  "obfs_password",
+]);
 
 function DynamicField({
   field,
@@ -133,7 +177,8 @@ function DynamicField({
                               <DropdownMenuItem
                                 key={idx}
                                 onClick={async () => {
-                                  const result = await genFunc.function();
+                                  const result =
+                                    await genFunc.function(protocolData);
                                   if (typeof result === "string") {
                                     fieldProps.onChange(result);
                                   } else if (field.generate!.updateFields) {
@@ -159,7 +204,8 @@ function DynamicField({
                       ) : field.generate.function ? (
                         <Button
                           onClick={async () => {
-                            const result = await field.generate!.function!();
+                            const result =
+                              await field.generate!.function!(protocolData);
                             if (typeof result === "string") {
                               fieldProps.onChange(result);
                             } else if (field.generate!.updateFields) {
@@ -234,8 +280,37 @@ function DynamicField({
               <FormLabel>{getFieldLabel(field)}</FormLabel>
               <FormControl>
                 <Select
-                  onValueChange={(v) => fieldProps.onChange(v)}
-                  value={fieldProps.value ?? field.defaultValue}
+                  onValueChange={(value) => {
+                    fieldProps.onChange(value);
+                    if (field.name === "security") {
+                      if (
+                        value === "tls" &&
+                        protocolData.cert_mode === "none"
+                      ) {
+                        form.setValue(
+                          `protocols.${protocolIndex}.cert_mode`,
+                          "self"
+                        );
+                      }
+                      if (value === "reality") {
+                        form.setValue(
+                          `protocols.${protocolIndex}.transport`,
+                          "tcp"
+                        );
+                        form.setValue(
+                          `protocols.${protocolIndex}.cert_mode`,
+                          "none"
+                        );
+                      }
+                    }
+                    if (field.name === "plugin" && value === "none") {
+                      form.setValue(
+                        `protocols.${protocolIndex}.plugin_opts`,
+                        null
+                      );
+                    }
+                  }}
+                  value={String(fieldProps.value ?? field.defaultValue ?? "")}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -292,6 +367,65 @@ function DynamicField({
                   onChange={(e) => fieldProps.onChange(e.target.value)}
                   placeholder={field.placeholder}
                   value={fieldProps.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+
+    case "string-list":
+      return (
+        <FormField
+          {...commonProps}
+          render={({ field: fieldProps }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
+              <FormControl>
+                <textarea
+                  className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  onChange={(event) =>
+                    fieldProps.onChange(
+                      event.target.value
+                        .split("\n")
+                        .map((value) => value.trim())
+                        .filter(Boolean)
+                    )
+                  }
+                  placeholder={field.placeholder}
+                  value={
+                    Array.isArray(fieldProps.value)
+                      ? fieldProps.value.join("\n")
+                      : ""
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+
+    case "json":
+      return (
+        <FormField
+          {...commonProps}
+          render={({ field: fieldProps }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>{getFieldLabel(field)}</FormLabel>
+              <FormControl>
+                <textarea
+                  className="flex min-h-32 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  onChange={(event) => fieldProps.onChange(event.target.value)}
+                  placeholder={field.placeholder}
+                  value={
+                    typeof fieldProps.value === "string"
+                      ? fieldProps.value
+                      : fieldProps.value
+                        ? JSON.stringify(fieldProps.value, null, 2)
+                        : ""
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -372,7 +506,7 @@ function renderGroupCard(
 }
 
 export default function ServerForm(props: {
-  trigger: string;
+  trigger: ReactNode;
   title: string;
   loading?: boolean;
   initialValues?: Partial<API.Server>;
@@ -386,8 +520,10 @@ export default function ServerForm(props: {
   const { isProtocolUsedInNodes } = useNode();
   const PROTOCOL_FIELDS = useProtocolFields();
 
-  const form = useForm({
-    resolver: zodResolver(formSchema),
+  const form = useForm<Record<string, any>>({
+    resolver: zodResolver(formSchema) as unknown as Resolver<
+      Record<string, any>
+    >,
     defaultValues: {
       name: "",
       address: "",
@@ -411,12 +547,53 @@ export default function ServerForm(props: {
         ...initialValues,
         protocols: PROTOCOLS.map((type) => {
           const existingProtocol = initialValues.protocols?.find(
-            (p) => p.type === type
+            (protocol) =>
+              protocol.type === type ||
+              (type === "hysteria2" && protocol.type === "hysteria")
           );
           const defaultConfig = getProtocolDefaultConfig(type);
-          return existingProtocol
-            ? { ...defaultConfig, ...existingProtocol }
-            : defaultConfig;
+          if (!existingProtocol) return defaultConfig;
+
+          const merged = {
+            ...defaultConfig,
+            ...existingProtocol,
+            type,
+            transport:
+              existingProtocol.transport === "websocket"
+                ? "ws"
+                : existingProtocol.transport,
+            plugin: existingProtocol.plugin || "none",
+            multiplex: normalizeMultiplexValue(
+              type,
+              existingProtocol.multiplex,
+              defaultConfig.multiplex
+            ),
+          };
+          // Only these three are TLS-only. anytls and trojan also accept
+          // REALITY, so coercing them here would rewrite a stored REALITY node.
+          if (["hysteria2", "tuic", "naive"].includes(type)) {
+            merged.security = "tls";
+            if (!merged.cert_mode || merged.cert_mode === "none") {
+              merged.cert_mode = "self";
+            }
+          }
+          if (
+            ["anytls", "trojan"].includes(type) &&
+            !["tls", "reality"].includes(String(merged.security))
+          ) {
+            merged.security = "tls";
+            merged.cert_mode = "self";
+          }
+          if (merged.security === "reality") {
+            // Never overwrite a stored transport: REALITY rides any stream
+            // transport on vless, and rewriting it here made every edit — even
+            // a rename — silently destroy an xhttp node's configuration.
+            if (!merged.transport) {
+              merged.transport = "tcp";
+            }
+            merged.cert_mode = "none";
+          }
+          return merged;
         }),
       });
     }
@@ -515,9 +692,41 @@ export default function ServerForm(props: {
       return;
     }
 
-    const filteredProtocols = (values?.protocols || []).filter(
-      (protocol: any) => protocol?.enable
-    );
+    const filteredProtocols = (values?.protocols || [])
+      .filter((protocol: any) => protocol?.enable)
+      .map((protocol: any) => {
+        const protocolType = protocol.type as ProtocolType;
+        const fields = PROTOCOL_FIELDS[protocolType] || [];
+        const fieldNames = [...new Set(fields.map((field) => field.name))];
+        const hiddenFieldNames = new Set(
+          fieldNames.filter((name) => {
+            const sameName = fields.filter((field) => field.name === name);
+            return sameName.every(
+              (field) => field.condition && !field.condition(protocol, {})
+            );
+          })
+        );
+        const normalized = Object.fromEntries(
+          Object.entries(protocol).filter(([key]) => {
+            if (
+              hiddenFieldNames.has(key) &&
+              !PRESERVED_HIDDEN_PROTOCOL_FIELDS.has(key)
+            ) {
+              return false;
+            }
+
+            return true;
+          })
+        );
+        if (normalized.plugin === "none") {
+          normalized.plugin = undefined;
+          normalized.plugin_opts = undefined;
+        }
+        if (normalized.multiplex === "none") {
+          normalized.multiplex = undefined;
+        }
+        return normalized;
+      });
 
     const result = {
       name: values.name,
@@ -534,26 +743,24 @@ export default function ServerForm(props: {
     }
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen && !initialValues) {
+      const full = PROTOCOLS.map((type) => getProtocolDefaultConfig(type));
+      form.reset({
+        name: "",
+        address: "",
+        country: "",
+        city: "",
+        protocols: full,
+      });
+    }
+    setOpen(nextOpen);
+  }
+
   return (
-    <Sheet onOpenChange={setOpen} open={open}>
+    <Sheet onOpenChange={handleOpenChange} open={open}>
       <SheetTrigger asChild>
-        <Button
-          onClick={() => {
-            if (!initialValues) {
-              const full = PROTOCOLS.map((t) => getProtocolDefaultConfig(t));
-              form.reset({
-                name: "",
-                address: "",
-                country: "",
-                city: "",
-                protocols: full,
-              });
-            }
-            setOpen(true);
-          }}
-        >
-          {trigger}
-        </Button>
+        {typeof trigger === "string" ? <Button>{trigger}</Button> : trigger}
       </SheetTrigger>
       <SheetContent className="w-[700px] max-w-full gap-0 md:max-w-3xl">
         <SheetHeader>

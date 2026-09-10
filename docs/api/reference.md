@@ -6,11 +6,10 @@ aside: false
 
 # API Reference
 
-The API reference now uses Scalar (embedded via iframe) to render the OpenAPI files hosted in [`public/swagger`](https://github.com/perfect-panel/ppanel-docs/tree/main/public/swagger). Each schema has its own dedicated page:
+The API reference uses Scalar (embedded via iframe) to render the aggregate OpenAPI document served from this site's [`docs/public/swagger`](https://github.com/perfect-panel/frontend/tree/main/docs/public/swagger) source directory.
 
-- [Common Service](./common) — shared authentication/utilities used by both user and admin portals.
-- [User Service](./user) — subscriptions, orders, tickets, profile management.
-- [Admin Service](./admin) — dashboard, maintenance, commerce, logging modules.
-- [Gateway](./gateway) — version checks, heartbeats, registration, and update orchestration hooks for edge services.
+Backend `master` publishes its generated Swagger JSON files to this repository. This page loads the complete aggregate spec so the explorer stays in one place instead of splitting services across separate explorers.
 
-Pick a service from the sidebar to view the interactive API explorer.
+<ClientOnly>
+  <ScalarIframe spec-url="/swagger/ppanel.json" title="Perfect Panel API Reference" />
+</ClientOnly>

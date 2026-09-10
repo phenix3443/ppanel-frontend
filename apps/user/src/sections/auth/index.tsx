@@ -1,6 +1,5 @@
 "use client";
 
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { Link } from "@tanstack/react-router";
 import { Spinner } from "@workspace/ui/components/spinner";
 import {
@@ -10,6 +9,7 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
 import { LanguageSwitch } from "@workspace/ui/composed/language-switch";
+import { DeferredDotLottie } from "@workspace/ui/composed/lottie";
 import { ThemeSwitch } from "@workspace/ui/composed/theme-switch";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/stores/global";
@@ -39,7 +39,7 @@ export default function Main() {
   const renderAuthContent = () => {
     if (!commonReady) {
       return (
-        <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 text-center">
+        <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-border/60 border-dashed bg-muted/20 px-6 text-center">
           <Spinner className="size-8" />
           <div>
             <p className="font-medium text-base">
@@ -58,7 +58,7 @@ export default function Main() {
 
     if (AUTH_METHODS.length === 0) {
       return (
-        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 text-center">
+        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-border/60 border-dashed bg-muted/20 px-6 text-center">
           <p className="font-semibold text-base">
             {t("noAuthMethods", "No direct sign-in methods are available")}
           </p>
@@ -108,9 +108,9 @@ export default function Main() {
               )}
               <span className="font-semibold text-2xl">{site.site_name}</span>
             </Link>
-            <DotLottieReact
+            <DeferredDotLottie
               autoplay
-              className="mx-auto hidden w-[275px] lg:block xl:w-[500px]"
+              className="mx-auto hidden aspect-square w-[275px] lg:block xl:w-[500px]"
               loop
               src="./assets/lotties/login.json"
             />

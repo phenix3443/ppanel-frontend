@@ -7,11 +7,19 @@ export function getPlatform(): string {
 
   const userAgent = navigator.userAgent.toLowerCase();
 
+  if (userAgent.includes("android")) return "android";
+
+  // Detect iOS, including iPad/iPhone requesting desktop site
+  // iOS devices have maxTouchPoints > 1, macOS typically has 0
+  const isIOS =
+    userAgent.includes("iphone") ||
+    userAgent.includes("ipad") ||
+    (userAgent.includes("mac") && navigator.maxTouchPoints > 1);
+  if (isIOS) return "ios";
+
   if (userAgent.includes("win")) return "windows";
   if (userAgent.includes("mac")) return "macos";
   if (userAgent.includes("linux")) return "linux";
-  if (userAgent.includes("android")) return "android";
-  if (userAgent.includes("iphone") || userAgent.includes("ipad")) return "ios";
 
   return "unknown";
 }
