@@ -24,11 +24,11 @@ export type NodeVersionStatus = {
 
 /** Server 上与版本相关的字段，同样只存在于我们的分支。 */
 export type ServerVersionFields = {
-  /** 这个节点单独设置的期望版本；空串表示跟随全局默认。 */
+  /** 这个节点的版本策略：空串=不自动升级，latest=跟随最新，或一个具体 tag。 */
   target_version?: string;
   /**
-   * 节点设置、全局默认、「跟随最新」收敛之后真正会下发的版本。
-   * 由服务端算，前端不要自己再推一遍——界面显示的必须和实际下发的一致。
+   * latest 解析成具体 tag 之后、真正会下发的版本。由服务端算，前端不要自己
+   * 再推一遍——界面显示的必须和实际下发的一致。
    */
   effective_target_version?: string;
 };
@@ -48,18 +48,16 @@ export type NodeVersionOption = {
 export type NodeVersionCatalog = {
   repo: string;
   latest: string;
-  /** 全局默认期望版本：空串=不干预，latest=跟随最新，或一个具体 tag。 */
-  default_target_version: string;
   /** 能下发的最低版本；比它旧的下发过去节点会失联。 */
   min_self_manageable?: string;
   list: NodeVersionOption[];
 };
 
 /**
- * 设置一批节点的期望版本。节点下次拉配置时会切到这个版本。
+ * 设置一批节点的版本策略。节点下次拉配置时会切到这个版本。
  *
- * **可以填比当前更旧的版本**——新版本出问题时用同一条路回退。
- * 传空串表示清掉单独设置、回落到全局默认；传 AUTO_LATEST 表示跟随最新。
+ * 三种取值，没有第四种，也没有继承：空串=不自动升级，AUTO_LATEST=跟随最新，
+ * 具体 tag=钉住。**可以填比当前更旧的版本**——新版出问题时用同一条路回退。
  */
 export async function setServerTargetVersion(
   body: { ids: number[]; target_version: string },

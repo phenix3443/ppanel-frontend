@@ -29,13 +29,19 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-/** 三档语义和服务端存的值一一对应，见 nodeversion.ValidateTarget。 */
-type Mode = "latest" | "pinned" | "inherit";
+/**
+ * 三档语义和服务端存的值一一对应，见 nodeversion.Resolve。
+ *
+ * 【没有第四档，也没有继承】原来还有一档「跟随全局默认」，配合一个全局设置
+ * 使用——等于同一个三档菜单在两个页面各出现一次，要回答「这个节点会跑哪个
+ * 版本」得做两层解析。全局那层已经砍掉了。
+ */
+type Mode = "latest" | "pinned" | "frozen";
 
 function modeOf(target: string | undefined): Mode {
   if (target === AUTO_LATEST) return "latest";
   if (target) return "pinned";
-  return "inherit";
+  return "frozen";
 }
 
 export type VersionDialogProps = {
@@ -43,7 +49,7 @@ export type VersionDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** 要设置的节点数，只用于文案；实际 id 由调用方持有。 */
   count: number;
-  /** 单个节点时它当前的设置，用来回填；批量时传 undefined。 */
+  /** 单个节点时它当前的策略，用来回填；批量时传 undefined。 */
   current?: string;
   catalog?: NodeVersionCatalog;
   loading?: boolean;
@@ -115,7 +121,7 @@ export default function VersionDialog({
           <DialogDescription>
             {t(
               "versionDialogDesc",
-              "节点下次拉配置时会下载并替换自身二进制后重启，期间连接会短暂中断。可以选比当前更旧的版本以回退。"
+              "每个节点的版本由它自己这一项决定，没有全局默认。切换时节点会下载并替换自身二进制后重启，期间连接会短暂中断；可以选比当前更旧的版本以回退。"
             )}
           </DialogDescription>
         </DialogHeader>
@@ -213,9 +219,9 @@ export default function VersionDialog({
           )}
 
           <div className="flex items-center gap-2">
-            <RadioGroupItem id="mode-inherit" value="inherit" />
-            <Label htmlFor="mode-inherit">
-              {t("modeInherit", "跟随全局默认")}
+            <RadioGroupItem id="mode-frozen" value="frozen" />
+            <Label htmlFor="mode-frozen">
+              {t("modeFrozen", "不自动升级（保持现状）")}
             </Label>
           </div>
         </RadioGroup>

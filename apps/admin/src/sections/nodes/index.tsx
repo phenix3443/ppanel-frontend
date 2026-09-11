@@ -322,11 +322,16 @@ export default function Nodes() {
                   {target.target_version &&
                     target.target_version !== AUTO_LATEST && (
                       <Badge variant="outline">
-                        {t("pinnedAt", "已固定 {{v}}", {
+                        {t("pinnedAt", "已钉住 {{v}}", {
                           v: target.target_version,
                         })}
                       </Badge>
                     )}
+                  {/* 【不自动升级要显式标出来】不标的话它和「最新」长得一样，
+                      直到某天发现这台落后了好几个版本才想起来它被冻住了。 */}
+                  {!target.target_version && (
+                    <Badge variant="outline">{t("frozen", "不自动升级")}</Badge>
+                  )}
                 </button>
               );
             },
