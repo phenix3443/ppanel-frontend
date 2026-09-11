@@ -19,6 +19,10 @@ import {
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  type NodeVersionStatus,
+  setServerTargetVersion,
+} from "@workspace/ui/services/admin/node-version";
 import { useNode } from "@/stores/node";
 import { useServer } from "@/stores/server";
 import NodeForm from "./node-form";
@@ -29,7 +33,36 @@ export default function Nodes() {
   const [loading, setLoading] = useState(false);
 
   // Use our zustand store for server data
-  const { getServerName, getServerAddress, getProtocolPort } = useServer();
+  const {
+    getServerName,
+    getServerAddress,
+    getProtocolPort,
+    getServerById,
+    fetchServers,
+  } = useServer();
+
+  // 版本字段只存在于我们自己的 ppanel-server 分支上；生成的 API.ServerStatus
+  // 来自上游 swagger，没有这几项，所以在读取处收口成一个明确的类型。
+  const versionOf = (serverId?: number): NodeVersionStatus =>
+    (getServerById?.(serverId as number)?.status ?? {}) as NodeVersionStatus;
+
+  const applyTargetVersion = async (serverId: number, version: string) => {
+    setLoading(true);
+    try {
+      await setServerTargetVersion({ id: serverId, target_version: version });
+      toast.success(
+        t("versionApplied", "已下发，节点会在下次拉取配置时切换（最多 60 秒）")
+      );
+      // 版本信息挂在 server store 上，而这个 store 只在首次挂载时拉一次。
+      // 不刷新它的话，节点升级完成后页面会一直显示旧版本，直到整页重载。
+      await fetchServers();
+      ref.current?.refresh();
+    } catch (_e) {
+      toast.error(t("versionFailed", "下发失败"));
+    } finally {
+      setLoading(false);
+    }
+  };
   const { fetchNodes, fetchTags } = useNode();
 
   return (
@@ -174,6 +207,82 @@ export default function Nodes() {
           header: ` ${t("protocol", "Protocol")}:${t("port", "Port")}`,
           cell: ({ row }) =>
             `${row.original.protocol}:${getProtocolPort(row.original.server_id, row.original.protocol)}`,
+        },
+        {
+          id: "version",
+          header: t("version", "Version"),
+          cell: ({ row }) => {
+            const v = versionOf(row.original.server_id);
+            if (!v.version) {
+              // 旧版本节点不上报版本；这里不能显示成「最新」，那会掩盖真实情况。
+              return <span className="text-muted-foreground">{t("versionUnknown", "未上报")}</span>;
+            }
+            return (
+              <div className="flex items-center gap-2">
+                <span>{v.version}</span>
+                {v.upgrade_available && (
+                  <Badge variant="destructive">
+                    {v.latest_version
+                      ? t("upgradeTo", "可升级 → {{v}}", { v: v.latest_version })
+                      : t("upgradable", "可升级")}
+                  </Badge>
+                )}
+              </div>
+            );
+          },
+        },
+        {
+          id: "version_action",
+          header: t("versionAction", "版本操作"),
+          cell: ({ row }) => {
+            const v = versionOf(row.original.server_id);
+            const serverId = row.original.server_id;
+            return (
+              <div className="flex items-center gap-2">
+                {v.upgrade_available && v.latest_version && (
+                  <ConfirmButton
+                    cancelText={t("cancel", "Cancel")}
+                    confirmText={t("confirm", "Confirm")}
+                    description={t(
+                      "upgradeDesc",
+                      "节点会下载并替换自身二进制后重启，期间连接会短暂中断。"
+                    )}
+                    onConfirm={() =>
+                      applyTargetVersion(serverId, v.latest_version as string)
+                    }
+                    title={t("upgradeTitle", "升级到 {{v}}", {
+                      v: v.latest_version,
+                    })}
+                    trigger={
+                      <Button disabled={loading} size="sm">
+                        {t("upgrade", "升级")}
+                      </Button>
+                    }
+                  />
+                )}
+                <Button
+                  disabled={loading}
+                  onClick={() => {
+                    // 手动指定版本，**可以填更旧的以回退**。
+                    const input = window.prompt(
+                      t(
+                        "setVersionPrompt",
+                        "输入目标版本（如 v1.1.14，可填更旧的版本以回退；留空表示不干预）"
+                      ),
+                      v.version ?? ""
+                    );
+                    if (input !== null) {
+                      applyTargetVersion(serverId, input.trim());
+                    }
+                  }}
+                  size="sm"
+                  variant="outline"
+                >
+                  {t("setVersion", "指定版本")}
+                </Button>
+              </div>
+            );
+          },
         },
         {
           accessorKey: "tags",
