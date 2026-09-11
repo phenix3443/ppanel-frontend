@@ -33,8 +33,13 @@ export default function Nodes() {
   const [loading, setLoading] = useState(false);
 
   // Use our zustand store for server data
-  const { getServerName, getServerAddress, getProtocolPort, getServerById } =
-    useServer();
+  const {
+    getServerName,
+    getServerAddress,
+    getProtocolPort,
+    getServerById,
+    fetchServers,
+  } = useServer();
 
   // 版本字段只存在于我们自己的 ppanel-server 分支上；生成的 API.ServerStatus
   // 来自上游 swagger，没有这几项，所以在读取处收口成一个明确的类型。
@@ -48,6 +53,9 @@ export default function Nodes() {
       toast.success(
         t("versionApplied", "已下发，节点会在下次拉取配置时切换（最多 60 秒）")
       );
+      // 版本信息挂在 server store 上，而这个 store 只在首次挂载时拉一次。
+      // 不刷新它的话，节点升级完成后页面会一直显示旧版本，直到整页重载。
+      await fetchServers();
       ref.current?.refresh();
     } catch (_e) {
       toast.error(t("versionFailed", "下发失败"));
