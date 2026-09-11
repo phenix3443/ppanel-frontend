@@ -13,6 +13,14 @@ WORKDIR /src
 # 本机构建，不值得为这点时间换一个会烂掉的构建文件。
 COPY . .
 RUN bun install --frozen-lockfile
+
+# 【必须在 build 之前注入】Vite 是构建期把 VITE_* 内联进产物的，运行时再设
+# 环境变量没有任何作用。不注入就会落到 .env.production 的 VITE_API_PREFIX=/api，
+# 浏览器去请求自己这个源的 /api，打不到 :8080 的后端。
+ARG VITE_API_BASE_URL=http://localhost:8080
+ARG VITE_API_PREFIX=
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_API_PREFIX=$VITE_API_PREFIX
 RUN bun run --filter ppanel-user-web build
 
 FROM nginx:1.27-alpine
