@@ -1,0 +1,19 @@
+# 本机 develop 用：从源码一路构建到可运行镜像。
+#
+# 【为什么不复用同目录的 Dockerfile】那个只做 COPY apps/user/dist，要求调用方
+# 先跑过 bun run build——CI 里前一个 job 正好产出了 dist，所以成立。本机
+# docker compose up 没有那个前置步骤，少一步就会 COPY 到一个空目录，
+# 表现是 404 而不是报错，很难看出哪里不对。
+FROM oven/bun:1.3.1-alpine AS builder
+WORKDIR /src
+
+# 【整个仓库一起拷，不单独抽依赖清单那一层】抽出来能省重装依赖的时间，
+# 但要把每个 workspace 的 package.json 逐条列出来（apps/* packages/* docs），
+# 加一个包就悄悄失效——踩过一次，报的是 "Workspace not found docs"。
+# 本机构建，不值得为这点时间换一个会烂掉的构建文件。
+COPY . .
+RUN bun install --frozen-lockfile
+RUN bun run --filter ppanel-user-web build
+
+FROM nginx:1.27-alpine
+COPY --from=builder /src/apps/user/dist /usr/share/nginx/html
