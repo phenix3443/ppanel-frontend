@@ -30,18 +30,21 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
- * 三档语义和服务端存的值一一对应，见 nodeversion.Resolve。
+ * 只有两档，语义和服务端存的值对应，见 nodeversion.Resolve。
  *
- * 【没有第四档，也没有继承】原来还有一档「跟随全局默认」，配合一个全局设置
- * 使用——等于同一个三档菜单在两个页面各出现一次，要回答「这个节点会跑哪个
- * 版本」得做两层解析。全局那层已经砍掉了。
+ * 【为什么没有「不自动升级」】把版本指定成它当前跑的那个，就已经是冻住了，
+ * 而且比服务端那个空串更强——空串是「面板不下发目标」，节点被人手动改过也
+ * 不会被纠正；钉死一个版本则会把它拉回来。
+ *
+ * 【也没有「跟随全局默认」】原来配合一个全局设置使用，等于同一个菜单在两个
+ * 页面各出现一次，要回答「这节点跑哪个版本」得做两层解析。全局层已经砍掉。
  */
-type Mode = "latest" | "pinned" | "frozen";
+type Mode = "latest" | "pinned";
 
+// 空串是历史数据（面板不下发目标）。界面上已经没有这一档，预选「跟随最新」
+// 让对话框始终有选中项——用户不点「下发」就不会真的改掉它。
 function modeOf(target: string | undefined): Mode {
-  if (target === AUTO_LATEST) return "latest";
-  if (target) return "pinned";
-  return "frozen";
+  return target && target !== AUTO_LATEST ? "pinned" : "latest";
 }
 
 export type VersionDialogProps = {
@@ -121,7 +124,7 @@ export default function VersionDialog({
           <DialogDescription>
             {t(
               "versionDialogDesc",
-              "每个节点的版本由它自己这一项决定，没有全局默认。切换时节点会下载并替换自身二进制后重启，期间连接会短暂中断；可以选比当前更旧的版本以回退。"
+              "每个节点的版本由它自己这一项决定，没有全局默认。切换时节点会下载并替换自身二进制后重启，期间连接会短暂中断；可以选比当前更旧的版本以回退，指定成当前版本即为冻结。"
             )}
           </DialogDescription>
         </DialogHeader>
@@ -217,13 +220,6 @@ export default function VersionDialog({
               )}
             </div>
           )}
-
-          <div className="flex items-center gap-2">
-            <RadioGroupItem id="mode-frozen" value="frozen" />
-            <Label htmlFor="mode-frozen">
-              {t("modeFrozen", "不自动升级（保持现状）")}
-            </Label>
-          </div>
         </RadioGroup>
 
         <DialogFooter>
@@ -236,15 +232,7 @@ export default function VersionDialog({
           </Button>
           <Button
             disabled={loading || !canSubmit}
-            onClick={() =>
-              onSubmit(
-                mode === "latest"
-                  ? AUTO_LATEST
-                  : mode === "pinned"
-                    ? pinned
-                    : ""
-              )
-            }
+            onClick={() => onSubmit(mode === "latest" ? AUTO_LATEST : pinned)}
             type="button"
           >
             {t("apply", "下发")}

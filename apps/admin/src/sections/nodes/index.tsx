@@ -327,10 +327,13 @@ export default function Nodes() {
                         })}
                       </Badge>
                     )}
-                  {/* 【不自动升级要显式标出来】不标的话它和「最新」长得一样，
-                      直到某天发现这台落后了好几个版本才想起来它被冻住了。 */}
+                  {/* 空串是历史数据：面板不下发目标，节点跑什么算什么。界面上
+                      已经没有这一档（「指定版本」填当前版本就是冻结，而且能把
+                      被手动改过的节点拉回来），但状态真存在就得如实显示。 */}
                   {!target.target_version && (
-                    <Badge variant="outline">{t("frozen", "不自动升级")}</Badge>
+                    <Badge variant="outline">
+                      {t("unmanaged", "未纳入版本管理")}
+                    </Badge>
                   )}
                 </button>
               );
