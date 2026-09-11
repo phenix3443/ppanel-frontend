@@ -29,13 +29,19 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-/** 三档语义和服务端存的值一一对应，见 nodeversion.ValidateTarget。 */
-type Mode = "latest" | "pinned" | "inherit";
+/**
+ * 三档语义和服务端存的值一一对应，见 nodeversion.Resolve。
+ *
+ * 【没有第四档，也没有继承】原来还有一档「跟随全局默认」，配合一个全局设置
+ * 使用——等于同一个三档菜单在两个页面各出现一次，要回答「这个节点会跑哪个
+ * 版本」得做两层解析。全局那层已经砍掉了。
+ */
+type Mode = "latest" | "pinned" | "frozen";
 
 function modeOf(target: string | undefined): Mode {
   if (target === AUTO_LATEST) return "latest";
   if (target) return "pinned";
-  return "inherit";
+  return "frozen";
 }
 
 export type VersionDialogProps = {
@@ -43,7 +49,7 @@ export type VersionDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** 要设置的节点数，只用于文案；实际 id 由调用方持有。 */
   count: number;
-  /** 单个节点时它当前的设置，用来回填；批量时传 undefined。 */
+  /** 单个节点时它当前的策略，用来回填；批量时传 undefined。 */
   current?: string;
   catalog?: NodeVersionCatalog;
   loading?: boolean;
@@ -84,8 +90,24 @@ export default function VersionDialog({
   const versions = catalog?.list ?? [];
   // 列表为空时只能手输：面板还没拉到上游，或 GitHub 不可达。
   const forceManual = manual || versions.length === 0;
+  const minVersion = catalog?.min_self_manageable;
+  // 手输的版本也要拦：服务端会拒，但等提交才报错不如当场说清楚。
+  // 只在两边都解析得出来时比较，解析不出来交给服务端判断。
+  const belowFloor = (() => {
+    if (!(minVersion && pinned)) return false;
+    const parse = (v: string) =>
+      /^v?(\d+)\.(\d+)\.(\d+)/.exec(v)?.slice(1, 4).map(Number);
+    const a = parse(pinned);
+    const b = parse(minVersion);
+    if (!(a && b)) return false;
+    for (let i = 0; i < 3; i++) {
+      if (a[i] !== b[i]) return (a[i] as number) < (b[i] as number);
+    }
+    return false;
+  })();
   const canSubmit =
-    mode !== "pinned" || /^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(pinned);
+    mode !== "pinned" ||
+    (/^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(pinned) && !belowFloor);
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -99,7 +121,7 @@ export default function VersionDialog({
           <DialogDescription>
             {t(
               "versionDialogDesc",
-              "节点下次拉配置时会下载并替换自身二进制后重启，期间连接会短暂中断。可以选比当前更旧的版本以回退。"
+              "每个节点的版本由它自己这一项决定，没有全局默认。切换时节点会下载并替换自身二进制后重启，期间连接会短暂中断；可以选比当前更旧的版本以回退。"
             )}
           </DialogDescription>
         </DialogHeader>
@@ -140,14 +162,38 @@ export default function VersionDialog({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {versions.map((v) => (
-                      <SelectItem key={v.version} value={v.version}>
-                        {v.version}
-                        {v.prerelease ? ` · ${t("prerelease", "预发布")}` : ""}
-                      </SelectItem>
-                    ))}
+                    {versions.map((v) => {
+                      // 【不能只是不显示】没有自升级能力的版本下发过去节点就
+                      // 失联了，但列表里凭空少几项会让人以为接口坏了。置灰
+                      // 并把原因写在旁边。
+                      const blocked = v.self_manageable === false;
+                      return (
+                        <SelectItem
+                          disabled={blocked}
+                          key={v.version}
+                          value={v.version}
+                        >
+                          {v.version}
+                          {v.prerelease
+                            ? ` · ${t("prerelease", "预发布")}`
+                            : ""}
+                          {blocked
+                            ? ` · ${t("notSelfManageable", "无自升级能力，降过去就收不回")}`
+                            : ""}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+              )}
+              {belowFloor && (
+                <p className="text-destructive text-xs">
+                  {t(
+                    "belowFloor",
+                    "{{v}} 没有自升级能力，下发过去节点就再也收不到控制台指令，只能人登机器手动装。能下发的最低版本是 {{min}}。",
+                    { v: pinned, min: minVersion }
+                  )}
+                </p>
               )}
               {versions.length > 0 && (
                 <button
@@ -173,9 +219,9 @@ export default function VersionDialog({
           )}
 
           <div className="flex items-center gap-2">
-            <RadioGroupItem id="mode-inherit" value="inherit" />
-            <Label htmlFor="mode-inherit">
-              {t("modeInherit", "跟随全局默认")}
+            <RadioGroupItem id="mode-frozen" value="frozen" />
+            <Label htmlFor="mode-frozen">
+              {t("modeFrozen", "不自动升级（保持现状）")}
             </Label>
           </div>
         </RadioGroup>

@@ -273,9 +273,11 @@ export default function Nodes() {
               const v = versionOf(serverId);
               const target = targetOf(serverId);
               const effective = target.effective_target_version;
-              const pending = Boolean(
-                effective && v.version && effective !== v.version
-              );
+              // 【version 缺失时也要给反馈】原来要求 v.version 非空才显示
+              // 「切换中」，结果最需要反馈的场景——节点没在上报——反而只剩
+              // 一个干巴巴的「未上报」，和「节点挂了」长得一模一样。
+              // 2026-09-11 就是这样对着界面看了半天以为是 bug。
+              const pending = Boolean(effective && effective !== v.version);
               return (
                 <button
                   className="flex items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-muted"
@@ -298,7 +300,11 @@ export default function Nodes() {
                   )}
                   {pending && (
                     <Badge variant="secondary">
-                      {t("switchingTo", "切换中 → {{v}}", { v: effective })}
+                      {v.version
+                        ? t("switchingTo", "切换中 → {{v}}", { v: effective })
+                        : t("awaitingReport", "目标 {{v}} · 等待上报", {
+                            v: effective,
+                          })}
                     </Badge>
                   )}
                   {!pending && v.upgrade_available && (
@@ -316,11 +322,16 @@ export default function Nodes() {
                   {target.target_version &&
                     target.target_version !== AUTO_LATEST && (
                       <Badge variant="outline">
-                        {t("pinnedAt", "已固定 {{v}}", {
+                        {t("pinnedAt", "已钉住 {{v}}", {
                           v: target.target_version,
                         })}
                       </Badge>
                     )}
+                  {/* 【不自动升级要显式标出来】不标的话它和「最新」长得一样，
+                      直到某天发现这台落后了好几个版本才想起来它被冻住了。 */}
+                  {!target.target_version && (
+                    <Badge variant="outline">{t("frozen", "不自动升级")}</Badge>
+                  )}
                 </button>
               );
             },
