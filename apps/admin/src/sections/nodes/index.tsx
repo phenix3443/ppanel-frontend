@@ -273,9 +273,11 @@ export default function Nodes() {
               const v = versionOf(serverId);
               const target = targetOf(serverId);
               const effective = target.effective_target_version;
-              const pending = Boolean(
-                effective && v.version && effective !== v.version
-              );
+              // 【version 缺失时也要给反馈】原来要求 v.version 非空才显示
+              // 「切换中」，结果最需要反馈的场景——节点没在上报——反而只剩
+              // 一个干巴巴的「未上报」，和「节点挂了」长得一模一样。
+              // 2026-09-11 就是这样对着界面看了半天以为是 bug。
+              const pending = Boolean(effective && effective !== v.version);
               return (
                 <button
                   className="flex items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-muted"
@@ -298,7 +300,11 @@ export default function Nodes() {
                   )}
                   {pending && (
                     <Badge variant="secondary">
-                      {t("switchingTo", "切换中 → {{v}}", { v: effective })}
+                      {v.version
+                        ? t("switchingTo", "切换中 → {{v}}", { v: effective })
+                        : t("awaitingReport", "目标 {{v}} · 等待上报", {
+                            v: effective,
+                          })}
                     </Badge>
                   )}
                   {!pending && v.upgrade_available && (

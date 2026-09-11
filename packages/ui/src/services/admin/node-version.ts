@@ -36,6 +36,12 @@ export type ServerVersionFields = {
 export type NodeVersionOption = {
   version: string;
   prerelease: boolean;
+  /**
+   * false 表示这个版本没有自升级能力，下发过去节点就再也收不到控制台指令。
+   * 由服务端判断（前端不要自己比版本号），界面上要置灰并说明原因，
+   * 不能只是不显示——列表里凭空少几项只会让人以为接口坏了。
+   */
+  self_manageable?: boolean;
   published_at: string;
 };
 
@@ -44,6 +50,8 @@ export type NodeVersionCatalog = {
   latest: string;
   /** 全局默认期望版本：空串=不干预，latest=跟随最新，或一个具体 tag。 */
   default_target_version: string;
+  /** 能下发的最低版本；比它旧的下发过去节点会失联。 */
+  min_self_manageable?: string;
   list: NodeVersionOption[];
 };
 
