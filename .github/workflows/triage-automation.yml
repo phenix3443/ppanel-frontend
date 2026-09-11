@@ -33,17 +33,37 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request_target' || github.event.issue.state == 'open'
     runs-on: ubuntu-latest
     steps:
+      # 【缺 secret 就跳过，不要失败】这套是从上游 fork 带来的，三个 secret
+      # 我们一个都没配。原来它给每个 PR 挂红叉，而当时仓库里没有别的 PR 检查
+      # ——「有问题的 PR」和「没问题的 PR」看起来一模一样，红叉彻底失去意义。
+      #
+      # 门闸只能放在 step 里：secrets 上下文在 job 级 if: 里取不到。
+      - name: Skip when unconfigured
+        id: gate
+        env:
+          TRIAGE_TOKEN: ${{ secrets.TRIAGE_TOKEN }}
+        run: |
+          if [ -z "$TRIAGE_TOKEN" ]; then
+            echo "::notice::TRIAGE_TOKEN 未配置，跳过分诊"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repo
+        if: steps.gate.outputs.configured == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
 
       - name: Setup Bun
+        if: steps.gate.outputs.configured == 'true'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.1
 
       - name: Collect triage context
+        if: steps.gate.outputs.configured == 'true'
         env:
           TRIAGE_TOKEN: ${{ secrets.TRIAGE_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
@@ -52,6 +72,7 @@ jobs:
         run: node scripts/triage-context.mjs
 
       - name: Send webhook to bridge
+        if: steps.gate.outputs.configured == 'true'
         env:
           AUTOMATION_WEBHOOK_URL: ${{ secrets.AUTOMATION_WEBHOOK_URL }}
           AUTOMATION_WEBHOOK_SECRET: ${{ secrets.AUTOMATION_WEBHOOK_SECRET }}
