@@ -121,11 +121,11 @@ export default function VersionDialog({
               count,
             })}
           </DialogTitle>
+          {/* 【只说后果，不解释设计】原来这里有四行，讲「没有全局默认」「可以
+              回退」「指定当前版本即为冻结」——都是读界面就能推出来的复述。
+              决策时真正需要知道的只有一件事：这个操作会重启节点。 */}
           <DialogDescription>
-            {t(
-              "versionDialogDesc",
-              "每个节点的版本由它自己这一项决定，没有全局默认。切换时节点会下载并替换自身二进制后重启，期间连接会短暂中断；可以选比当前更旧的版本以回退，指定成当前版本即为冻结。"
-            )}
+            {t("versionDialogDesc", "切换版本会重启节点，连接短暂中断。")}
           </DialogDescription>
         </DialogHeader>
 
@@ -181,7 +181,7 @@ export default function VersionDialog({
                             ? ` · ${t("prerelease", "预发布")}`
                             : ""}
                           {blocked
-                            ? ` · ${t("notSelfManageable", "无自升级能力，降过去就收不回")}`
+                            ? ` · ${t("notSelfManageable", "无自升级能力")}`
                             : ""}
                         </SelectItem>
                       );
@@ -193,7 +193,7 @@ export default function VersionDialog({
                 <p className="text-destructive text-xs">
                   {t(
                     "belowFloor",
-                    "{{v}} 没有自升级能力，下发过去节点就再也收不到控制台指令，只能人登机器手动装。能下发的最低版本是 {{min}}。",
+                    "{{v}} 没有自升级能力，降过去只能人登机器救回来。最低 {{min}}。",
                     { v: pinned, min: minVersion }
                   )}
                 </p>
@@ -213,7 +213,7 @@ export default function VersionDialog({
                 <p className="text-muted-foreground text-xs">
                   {t(
                     "versionListEmpty",
-                    "没能从 {{repo}} 拉到版本列表，请手动输入 tag。",
+                    "拉不到 {{repo}} 的版本列表，手动输入 tag。",
                     { repo: catalog?.repo ?? "GitHub" }
                   )}
                 </p>
