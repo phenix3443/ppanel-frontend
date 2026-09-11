@@ -33,9 +33,13 @@ export default function Auth() {
               />
               <span className="font-semibold text-2xl">{site.site_name}</span>
             </Link>
+            {/* 高度必须受视口约束，不能只受栏宽约束。写 aspect-square w-full
+                时，1920 宽的窗口下左栏 996px，这个装饰方块就有 996px 高，
+                比 929px 的视口还高——站点描述被挤到 top=1180，在折叠线以下，
+                中间留一大片空白。屏幕越宽越严重。 */}
             <DeferredDotLottie
               autoplay
-              className="pointer-events-none mx-auto hidden aspect-square w-full lg:block"
+              className="pointer-events-none mx-auto hidden aspect-square w-full max-w-[min(38vh,380px)] lg:block"
               loop
               src="./assets/lotties/login.json"
             />
