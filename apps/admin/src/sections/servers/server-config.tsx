@@ -13,6 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@workspace/ui/components/form";
+import { Input } from "@workspace/ui/components/input";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import {
   Select,
@@ -70,6 +71,14 @@ const nodeConfigSchema = z.object({
   node_push_interval: z.number().optional(),
   traffic_report_threshold: z.number().optional(),
   ip_strategy: z.enum(["prefer_ipv4", "prefer_ipv6"]).optional(),
+  // 空串=不干预，"latest"=跟随最新，或一个具体 tag。校验规则和服务端
+  // nodeversion.ValidateTarget 一致——这个值会被节点拿去拼下载 URL。
+  default_target_version: z
+    .string()
+    .regex(/^$|^latest$|^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/, {
+      message: "应为空、latest，或形如 v1.1.14",
+    })
+    .optional(),
   dns: z.array(dnsConfigSchema).optional(),
   block: z.array(z.string()).optional(),
   outbound: z.array(outboundConfigSchema).optional(),
@@ -98,6 +107,7 @@ export default function ServerConfig() {
       node_push_interval: undefined,
       traffic_report_threshold: undefined,
       ip_strategy: "prefer_ipv4",
+      default_target_version: "",
       dns: [],
       block: [],
       outbound: [],
@@ -116,6 +126,9 @@ export default function ServerConfig() {
         ip_strategy:
           (cfgResp.ip_strategy as "prefer_ipv4" | "prefer_ipv6" | undefined) ||
           "prefer_ipv4",
+        default_target_version:
+          (cfgResp as { default_target_version?: string })
+            .default_target_version ?? "",
         dns: cfgResp.dns || [],
         block: cfgResp.block || [],
         outbound: cfgResp.outbound || [],
@@ -310,6 +323,83 @@ export default function ServerConfig() {
                           {t(
                             "server_config.fields.node_push_interval_desc",
                             "How often the node pushes stats (seconds)."
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="default_target_version"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {t(
+                            "server_config.fields.default_target_version",
+                            "默认节点版本"
+                          )}
+                        </FormLabel>
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={(v) =>
+                              field.onChange(
+                                v === "none" ? "" : v === "pinned" ? "v" : v
+                              )
+                            }
+                            value={
+                              field.value
+                                ? field.value === "latest"
+                                  ? "latest"
+                                  : "pinned"
+                                : "none"
+                            }
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-48">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {/* Radix Select 不接受空字符串当 item value，
+                                  用 none 做哨兵，存库时映射回空串。 */}
+                              <SelectItem value="none">
+                                {t(
+                                  "server_config.fields.target_none",
+                                  "不干预"
+                                )}
+                              </SelectItem>
+                              <SelectItem value="latest">
+                                {t(
+                                  "server_config.fields.target_latest",
+                                  "跟随最新"
+                                )}
+                              </SelectItem>
+                              <SelectItem value="pinned">
+                                {t(
+                                  "server_config.fields.target_pinned",
+                                  "指定版本"
+                                )}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {Boolean(field.value) && field.value !== "latest" && (
+                            <FormControl>
+                              <Input
+                                onChange={(e) =>
+                                  field.onChange(e.target.value.trim())
+                                }
+                                placeholder="v1.1.14"
+                                value={field.value ?? ""}
+                              />
+                            </FormControl>
+                          )}
+                        </div>
+                        <FormDescription>
+                          {t(
+                            "server_config.fields.default_target_version_desc",
+                            "节点没有单独设置期望版本时用这个。「跟随最新」由面板解析成具体 tag 再下发，节点不会自己去问 GitHub。"
                           )}
                         </FormDescription>
                         <FormMessage />
