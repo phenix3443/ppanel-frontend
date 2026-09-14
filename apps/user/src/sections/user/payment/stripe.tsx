@@ -21,6 +21,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { paymentIcons } from "@/assets/payment";
 
 interface StripePaymentProps {
   method: string;
@@ -375,7 +376,7 @@ const CheckoutForm: React.FC<Omit<StripePaymentProps, "publishable_key">> = ({
       ) : (
         <QRCodeCanvas
           imageSettings={{
-            src: `./assets/payment/${method}.svg`,
+            src: paymentIcons[method as keyof typeof paymentIcons] ?? "",
             width: 24,
             height: 24,
             excavate: true,

@@ -11,6 +11,7 @@ import { getV1PublicPortalPaymentMethod as getAvailablePaymentMethods } from "@w
 import type React from "react";
 import { memo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { paymentIcons } from "@/assets/payment";
 
 interface PaymentMethodsProps {
   value: number;
@@ -84,7 +85,7 @@ const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                 <img
                   alt={item.name}
                   height={48}
-                  src={item.icon || "./assets/payment/balance.svg"}
+                  src={item.icon || paymentIcons.balance}
                   width={48}
                 />
               </div>

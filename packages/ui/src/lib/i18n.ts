@@ -30,7 +30,12 @@ export function initializeI18n(i18nConfig?: InitOptions) {
 
       // HTTP backend configuration
       backend: {
-        loadPath: "assets/locales/{{lng}}/{{ns}}.json", // Translation files path template (relative to base)
+        // A bare relative path resolves against whatever path the SPA is
+        // sitting on, so a URL with a path segment fetched index.html instead
+        // of the catalogue and silently fell back to English. This only fixes
+        // dev: with `base: "./"` the build compiles BASE_URL to "./", which is
+        // relative again.
+        loadPath: `${import.meta.env.BASE_URL}assets/locales/{{lng}}/{{ns}}.json`,
         crossDomain: false, // Disable cross-domain requests
         withCredentials: false, // Don't send credentials with requests
         allowMultiLoading: true, // Load namespaces individually
