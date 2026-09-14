@@ -23,6 +23,7 @@ import { addMinutes, format } from "date-fns";
 import { QRCodeCanvas } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { paymentIcons } from "@/assets/payment";
 import { Display } from "@/components/display";
 import { SubscribeBilling } from "@/sections/subscribe/billing";
 import { SubscribeDetail } from "@/sections/subscribe/detail";
@@ -249,7 +250,7 @@ export default function Order() {
                 </p>
                 <QRCodeCanvas
                   imageSettings={{
-                    src: "./assets/payment/alipay_f2f.svg",
+                    src: paymentIcons.alipay_f2f,
                     width: 24,
                     height: 24,
                     excavate: true,
