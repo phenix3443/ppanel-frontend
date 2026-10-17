@@ -14,7 +14,12 @@ import { useTableSearchParams } from "@/utils/use-table-search-params";
 export default function ResetSubscribeLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const syncFilters = useTableSearchParams(["date", "user_subscribe_id"]);
+  const syncFilters = useTableSearchParams([
+    "date",
+    "start_date",
+    "end_date",
+    "user_subscribe_id",
+  ]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -27,7 +32,8 @@ export default function ResetSubscribeLogPage() {
   };
 
   const initialFilters = {
-    date: sp.date || today,
+    start_date: sp.start_date || (sp.end_date ? undefined : sp.date || today),
+    end_date: sp.end_date || (sp.start_date ? undefined : sp.date || today),
     user_subscribe_id: sp.user_subscribe_id
       ? Number(sp.user_subscribe_id)
       : undefined,
@@ -35,7 +41,7 @@ export default function ResetSubscribeLogPage() {
   return (
     <ProTable<
       API.ResetSubscribeLog,
-      { date?: string; user_subscribe_id?: number }
+      { start_date?: string; end_date?: string; user_subscribe_id?: number }
     >
       columns={[
         {
@@ -81,7 +87,12 @@ export default function ResetSubscribeLogPage() {
       initialFilters={initialFilters}
       onFiltersChange={syncFilters}
       params={[
-        { key: "date", type: "date" },
+        {
+          key: "start_date",
+          type: "date",
+          label: t("startDate", "Start date"),
+        },
+        { key: "end_date", type: "date", label: t("endDate", "End date") },
         {
           key: "user_subscribe_id",
           placeholder: t("column.userSubscribeId", "User subscription ID"),
@@ -91,7 +102,8 @@ export default function ResetSubscribeLogPage() {
         const { data } = await filterResetSubscribeLog({
           page: pagination.page,
           size: pagination.size,
-          date: (filter as any)?.date,
+          start_date: filter?.start_date,
+          end_date: filter?.end_date,
           user_subscribe_id: (filter as any)?.user_subscribe_id,
         });
         const list = (data?.data?.list || []) as any[];

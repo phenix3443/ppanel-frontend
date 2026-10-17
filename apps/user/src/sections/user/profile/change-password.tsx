@@ -17,15 +17,31 @@ import {
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
 import { putV1PublicUserPassword as updateUserPassword } from "@workspace/ui/services/user/user";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useGlobalStore } from "@/stores/global";
+import { Logout } from "@/utils/common";
+import CurrentCredentialFields, {
+  type VerifyBy,
+} from "./current-credential-fields";
 
 export default function ChangePassword() {
   const { t } = useTranslation("profile");
+  const { user } = useGlobalStore();
+  const hasMobile = user?.auth_methods?.some(
+    (auth) => auth.auth_type === "mobile"
+  );
+  const email = user?.auth_methods?.find(
+    (auth) => auth.auth_type === "email"
+  )?.auth_identifier;
+  const [verifyBy, setVerifyBy] = useState<VerifyBy>("password");
   const FormSchema = z
     .object({
+      old_password: z.string().optional(),
+      current_code: z.string().optional(),
       password: z.string().min(6),
       repeat_password: z.string(),
     })
@@ -36,12 +52,40 @@ export default function ChangePassword() {
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      old_password: "",
+      current_code: "",
+      password: "",
+      repeat_password: "",
+    },
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    await updateUserPassword({ password: data.password });
-    toast.success(t("accountSettings.updateSuccess", "Update Successful"));
-    form.reset();
+    // Without a bound email the field stays optional: an account with
+    // neither a password nor a bound address sets its first one unproven.
+    const credential = verifyBy === "code" ? "current_code" : "old_password";
+    if (email && !data[credential]) {
+      form.setError(credential, {
+        message:
+          verifyBy === "code"
+            ? t("currentCredential.codeRequired", "Enter the verification code")
+            : t(
+                "currentCredential.passwordRequired",
+                "Enter your current password"
+              ),
+      });
+      return;
+    }
+    await updateUserPassword({
+      password: data.password,
+      old_password: data.old_password || undefined,
+      current_code: data.current_code || undefined,
+    });
+    // The change ends every session of the account, this one included.
+    toast.success(
+      t("currentCredential.signInAgain", "Updated. Please sign in again.")
+    );
+    Logout();
   }
 
   return (
@@ -61,6 +105,20 @@ export default function ChangePassword() {
             id="password-form"
             onSubmit={form.handleSubmit(onSubmit)}
           >
+            <CurrentCredentialFields
+              email={email}
+              hint={
+                hasMobile
+                  ? undefined
+                  : t(
+                      "currentCredential.firstPassword",
+                      "Leave empty when setting your first password."
+                    )
+              }
+              onVerifyByChange={setVerifyBy}
+              passwordName="old_password"
+              verifyBy={verifyBy}
+            />
             <FormField
               control={form.control}
               name="password"
