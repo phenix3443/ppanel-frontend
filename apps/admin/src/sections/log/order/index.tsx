@@ -33,11 +33,18 @@ function PriceRow({ label, value }: { label: string; value: number }) {
 export default function OrderLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const syncFilters = useTableSearchParams(["date", "search", "user_id"]);
+  const syncFilters = useTableSearchParams([
+    "date",
+    "start_date",
+    "end_date",
+    "search",
+    "user_id",
+  ]);
   const today = new Date().toISOString().split("T")[0];
 
   const initialFilters = {
-    date: sp.date || today,
+    start_date: sp.start_date || (sp.end_date ? undefined : sp.date || today),
+    end_date: sp.end_date || (sp.start_date ? undefined : sp.date || today),
     search: sp.search || undefined,
     user_id: sp.user_id ? Number(sp.user_id) : undefined,
   };
@@ -50,7 +57,12 @@ export default function OrderLogPage() {
   return (
     <ProTable<
       API.OrderLog,
-      { date?: string; search?: string; user_id?: number }
+      {
+        start_date?: string;
+        end_date?: string;
+        search?: string;
+        user_id?: number;
+      }
     >
       columns={[
         {
@@ -163,7 +175,12 @@ export default function OrderLogPage() {
       initialFilters={initialFilters}
       onFiltersChange={syncFilters}
       params={[
-        { key: "date", type: "date" },
+        {
+          key: "start_date",
+          type: "date",
+          label: t("startDate", "Start date"),
+        },
+        { key: "end_date", type: "date", label: t("endDate", "End date") },
         {
           key: "search",
           label: t("column.queryOrder", "Order log search"),
@@ -175,7 +192,8 @@ export default function OrderLogPage() {
         const { data } = await filterOrderLog({
           page: pagination.page,
           size: pagination.size,
-          date: filter?.date,
+          start_date: filter?.start_date,
+          end_date: filter?.end_date,
           search: filter?.search,
           user_id: filter?.user_id,
         });

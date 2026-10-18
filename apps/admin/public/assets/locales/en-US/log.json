@@ -1,4 +1,6 @@
 {
+  "startDate": "Start date",
+  "endDate": "End date",
   "column": {
     "amount": "Amount",
     "balance": "Balance",

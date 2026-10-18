@@ -24,18 +24,21 @@ export default function SendCode({ type, params }: SendCodeProps) {
   const { verify_code_interval } = common.verify_code;
   const [targetDate, setTargetDate] = useState<number>();
   const [seconds, setSeconds] = useState(0);
+  // Register and security codes go out on separate send intervals, so each
+  // purpose keeps its own countdown.
+  const storageKey = `verify_code_${type}_${params.type}`;
 
   useEffect(() => {
-    const storedEndTime = localStorage.getItem(`verify_code_${type}`);
+    const storedEndTime = localStorage.getItem(storageKey);
     if (storedEndTime) {
       const endTime = Number.parseInt(storedEndTime, 10);
       if (endTime > Date.now()) {
         setTargetDate(endTime);
       } else {
-        localStorage.removeItem(`verify_code_${type}`);
+        localStorage.removeItem(storageKey);
       }
     }
-  }, [type]);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!targetDate) {
@@ -50,7 +53,7 @@ export default function SendCode({ type, params }: SendCodeProps) {
 
       if (remaining === 0) {
         setTargetDate(undefined);
-        localStorage.removeItem(`verify_code_${type}`);
+        localStorage.removeItem(storageKey);
       }
     };
 
@@ -58,12 +61,12 @@ export default function SendCode({ type, params }: SendCodeProps) {
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [targetDate, type]);
+  }, [targetDate, storageKey]);
 
   const setCodeTimer = () => {
     const endTime = Date.now() + verify_code_interval * 1000;
     setTargetDate(endTime);
-    localStorage.setItem(`verify_code_${type}`, endTime.toString());
+    localStorage.setItem(storageKey, endTime.toString());
   };
 
   const getEmailCode = async () => {

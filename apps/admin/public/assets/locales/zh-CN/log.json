@@ -1,4 +1,6 @@
 {
+  "startDate": "开始日期",
+  "endDate": "结束日期",
   "column": {
     "amount": "金额",
     "balance": "余额",
