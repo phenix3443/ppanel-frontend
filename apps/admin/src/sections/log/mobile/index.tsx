@@ -12,16 +12,25 @@ import { useTableSearchParams } from "@/utils/use-table-search-params";
 export default function MobileLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const syncFilters = useTableSearchParams(["date", "search"]);
+  const syncFilters = useTableSearchParams([
+    "date",
+    "start_date",
+    "end_date",
+    "search",
+  ]);
 
   const today = new Date().toISOString().split("T")[0];
 
   const initialFilters = {
     search: sp.search || undefined,
-    date: sp.date || today,
+    start_date: sp.start_date || (sp.end_date ? undefined : sp.date || today),
+    end_date: sp.end_date || (sp.start_date ? undefined : sp.date || today),
   };
   return (
-    <ProTable<API.MessageLog, { search?: string }>
+    <ProTable<
+      API.MessageLog,
+      { start_date?: string; end_date?: string; search?: string }
+    >
       columns={[
         {
           accessorKey: "platform",
@@ -87,14 +96,20 @@ export default function MobileLogPage() {
           label: t("column.query", "Recipient or content"),
           placeholder: t("column.queryPlaceholder", "Search messages"),
         },
-        { key: "date", type: "date" },
+        {
+          key: "start_date",
+          type: "date",
+          label: t("startDate", "Start date"),
+        },
+        { key: "end_date", type: "date", label: t("endDate", "End date") },
       ]}
       request={async (pagination, filter) => {
         const { data } = await filterMobileLog({
           page: pagination.page,
           size: pagination.size,
           search: filter?.search,
-          date: (filter as any)?.date,
+          start_date: filter?.start_date,
+          end_date: filter?.end_date,
         });
         const list = ((data?.data?.list || []) as API.MessageLog[]) || [];
         const total = Number(data?.data?.total || list.length);

@@ -13,17 +13,26 @@ import { useTableSearchParams } from "@/utils/use-table-search-params";
 export default function ServerTrafficLogPage() {
   const { t } = useTranslation("log");
   const sp = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const syncFilters = useTableSearchParams(["date", "server_id"]);
+  const syncFilters = useTableSearchParams([
+    "date",
+    "start_date",
+    "end_date",
+    "server_id",
+  ]);
   const { getServerName } = useServer();
 
   const today = new Date().toISOString().split("T")[0];
 
   const initialFilters = {
-    date: sp.date || today,
+    start_date: sp.start_date || (sp.end_date ? undefined : sp.date || today),
+    end_date: sp.end_date || (sp.start_date ? undefined : sp.date || today),
     server_id: sp.server_id ? Number(sp.server_id) : undefined,
   };
   return (
-    <ProTable<API.ServerTrafficLog, { date?: string; server_id?: number }>
+    <ProTable<
+      API.ServerTrafficLog,
+      { start_date?: string; end_date?: string; server_id?: number }
+    >
       actions={{
         render: (row) => [
           <Button asChild key="detail">
@@ -68,14 +77,20 @@ export default function ServerTrafficLogPage() {
       initialFilters={initialFilters}
       onFiltersChange={syncFilters}
       params={[
-        { key: "date", type: "date" },
+        {
+          key: "start_date",
+          type: "date",
+          label: t("startDate", "Start date"),
+        },
+        { key: "end_date", type: "date", label: t("endDate", "End date") },
         { key: "server_id", placeholder: t("column.serverId", "Server ID") },
       ]}
       request={async (pagination, filter) => {
         const { data } = await filterServerTrafficLog({
           page: pagination.page,
           size: pagination.size,
-          date: (filter as any)?.date,
+          start_date: filter?.start_date,
+          end_date: filter?.end_date,
           server_id: (filter as any)?.server_id,
         });
         const list = (data?.data?.list || []) as any[];

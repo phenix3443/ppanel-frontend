@@ -7,6 +7,17 @@
     "updatePassword": "Update Password",
     "updateSuccess": "Password updated successfully"
   },
+  "currentCredential": {
+    "code": "Code sent to {{email}}",
+    "codeRequired": "Enter the verification code",
+    "firstPassword": "Leave empty when setting your first password.",
+    "mobileNeedsPassword": "An account without a password needs to set one before changing its phone number.",
+    "password": "Current password",
+    "passwordRequired": "Enter your current password",
+    "signInAgain": "Updated. Please sign in again.",
+    "useCode": "No password set? Verify with a code sent to {{email}}",
+    "usePassword": "Use your current password"
+  },
   "notify": {
     "balanceChange": "Balance Change Notification",
     "finance": "Finance Notification",
@@ -18,6 +29,7 @@
   },
   "thirdParty": {
     "bind": "thirdParty.bind",
+    "bindEmail": "Connect Email",
     "bindFailed": "Bind failed",
     "bindMobile": "Bind Mobile",
     "bindSuccess": "Bind successfully",
