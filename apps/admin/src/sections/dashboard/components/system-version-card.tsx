@@ -26,7 +26,6 @@ import {
 } from "@workspace/ui/services/admin/admin";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import packageJson from "../../../../../../package.json";
 
 export default function SystemVersionCard() {
   const { t } = useTranslation("tool");
@@ -106,7 +105,8 @@ export default function SystemVersionCard() {
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge>V{packageJson.version}</Badge>
+            {/* package.json 的 version 是上游的 tag，不随我们的提交变；CI 注入 sha-<commit> */}
+            <Badge>{import.meta.env.VITE_APP_VERSION ?? "dev"}</Badge>
           </div>
         </div>
 
