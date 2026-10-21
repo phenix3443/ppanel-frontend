@@ -1,0 +1,486 @@
+<!doctype html>
+<!--
+  PROTOTYPE — 一次性视觉稿，不是生产代码，不要合入 main。
+  问题：管理后台 Home（/dashboard）在暖黑 + 橙色强调的视觉语言下应该长什么样？
+  三个结构不同的变体通过 ?variant=A|B|C 切换；底部浮条可切换变体、主题和数据场景。
+  数据全部为本地 mock，字段与 apps/admin/src/sections/dashboard 现有接口一一对应，没有新增业务数据。
+  直接双击打开即可（字体走 Google Fonts，离线时回退系统字体）。
+-->
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PROTOTYPE · ppanel 管理后台 Home 视觉稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ===== Tokens ===== */
+:root, [data-theme="dark"] {
+  --canvas: #151412;          /* 页面底 */
+  --foundation: #1e1c19;      /* 侧栏 / 顶栏 */
+  --surface: #25221e;         /* 卡片 */
+  --surface-raised: #2d2924;  /* 卡片内二级块、hover */
+  --border-subtle: rgba(236, 226, 214, 0.12);
+  --border: rgba(236, 226, 214, 0.18);
+  --border-strong: rgba(236, 226, 214, 0.32);
+  --text-1: #f2ede5;
+  --text-2: #c8c0b7;
+  --text-3: #9e958b;
+  --signal: #e99432;          /* 品牌强调 / 主操作 */
+  --signal-hover: #f0a246;
+  --signal-soft: rgba(233, 148, 50, 0.14);
+  --signal-border: rgba(233, 148, 50, 0.46);
+  --on-signal: #24170b;
+  --success: #67bd91; --success-soft: rgba(103, 189, 145, 0.14);
+  --danger: #ee8178;  --danger-soft: rgba(238, 129, 120, 0.14);
+  --warning: #e3c160; --warning-soft: rgba(227, 193, 96, 0.14);
+  --info: #79acd0;    --info-soft: rgba(121, 172, 208, 0.14);
+  --structure: #9e958b;
+  --chart-grid: rgba(236, 226, 214, 0.08);
+  --highlight: inset 0 1px 0 rgba(255, 248, 238, 0.05);
+}
+[data-theme="light"] {
+  --canvas: #f1f0ed;
+  --foundation: #e7e4df;
+  --surface: #fcfbf8;
+  --surface-raised: #f7f6f3;
+  --border-subtle: rgba(82, 76, 70, 0.12);
+  --border: rgba(82, 76, 70, 0.18);
+  --border-strong: rgba(82, 76, 70, 0.34);
+  --text-1: #292725;
+  --text-2: #625e59;
+  --text-3: #6b665f;
+  --signal: #a64b00;
+  --signal-hover: #8f3f00;
+  --signal-soft: rgba(217, 119, 6, 0.12);
+  --signal-border: rgba(217, 119, 6, 0.34);
+  --on-signal: #ffffff;
+  --success: #2f6d52; --success-soft: rgba(52, 119, 90, 0.12);
+  --danger: #a3443d;  --danger-soft: rgba(185, 80, 73, 0.12);
+  --warning: #785c00; --warning-soft: rgba(120, 92, 0, 0.12);
+  --info: #456a83;    --info-soft: rgba(77, 116, 143, 0.12);
+  --structure: #817a72;
+  --chart-grid: rgba(82, 76, 70, 0.1);
+  --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+:root {
+  --font-sans: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r-object: 16px; --r-control: 10px; --r-compact: 6px;
+  --gutter: 24px; --gap: 16px; --pad: 20px;
+}
+
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--canvas); color: var(--text-1);
+  font: 400 14px/1.5 var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: var(--r-compact); }
+
+/* ===== Shell（仅继承 token，结构不变） ===== */
+.shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+.side { background: var(--foundation); border-right: 1px solid var(--border-subtle); padding: 16px 12px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; font-weight: 600; font-size: 15px; }
+.brand i { width: 26px; height: 26px; border-radius: 8px; background: var(--signal); display: grid; place-items: center; color: var(--on-signal); font-style: normal; font-size: 13px; }
+.nav-g { margin: 14px 8px 6px; font-size: 12px; color: var(--text-3); }
+.nav-i { display: block; padding: 7px 10px; border-radius: var(--r-control); color: var(--text-2); font-size: 13px; }
+.nav-i:hover { background: var(--surface-raised); color: var(--text-1); }
+.nav-i.on { background: var(--signal-soft); color: var(--signal); font-weight: 500; box-shadow: inset 2px 0 0 var(--signal); }
+.top { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--gutter); border-bottom: 1px solid var(--border-subtle); background: var(--canvas); position: sticky; top: 0; z-index: 2; }
+.crumb { color: var(--text-3); font-size: 13px; } .crumb b { color: var(--text-1); font-weight: 500; }
+.top-r { display: flex; gap: 8px; align-items: center; }
+.ibtn { height: 32px; min-width: 32px; padding: 0 10px; border-radius: var(--r-control); border: 1px solid var(--border); background: transparent; color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer; }
+.ibtn:hover { border-color: var(--border-strong); color: var(--text-1); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-raised); border: 1px solid var(--border); display: grid; place-items: center; font-size: 12px; color: var(--text-2); }
+.main { padding: var(--gutter); padding-bottom: 96px; max-width: 1440px; }
+
+/* ===== Primitives ===== */
+.card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-object); padding: var(--pad); box-shadow: var(--highlight); min-width: 0; }
+a.card { display: block; transition: border-color .15s, background .15s; }
+a.card:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; min-height: 32px; }
+.card-t { font-size: 15px; font-weight: 600; margin: 0; }
+.card-sub { font-size: 12px; color: var(--text-3); }
+.label { font-size: 13px; color: var(--text-2); }
+.meta { font-size: 12px; color: var(--text-3); }
+.kpi-v { font-size: 28px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.kpi-v.xl { font-size: 36px; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-control); background: var(--canvas); border: 1px solid var(--border-subtle); }
+[data-theme="light"] .seg { background: var(--foundation); }
+.seg button { border: 0; background: transparent; color: var(--text-3); font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 7px; cursor: pointer; }
+.seg button:hover { color: var(--text-1); }
+.seg button.on { background: var(--surface-raised); color: var(--text-1); box-shadow: 0 0 0 1px var(--border); }
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; border: 1px solid transparent; white-space: nowrap; }
+.badge.ok { color: var(--success); background: var(--success-soft); }
+.badge.bad { color: var(--danger); background: var(--danger-soft); }
+.badge.warn { color: var(--warning); background: var(--warning-soft); }
+.badge.mute { color: var(--text-2); background: var(--surface-raised); border-color: var(--border-subtle); }
+.badge.sig { color: var(--signal); background: var(--signal-soft); border-color: var(--signal-border); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.btn { height: 32px; padding: 0 12px; border-radius: var(--r-control); border: 1px solid var(--border); background: transparent; color: var(--text-1); font: inherit; font-size: 13px; cursor: pointer; }
+.btn:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.btn.danger:hover { background: var(--danger-soft); }
+.ico { width: 36px; height: 36px; border-radius: var(--r-control); display: grid; place-items: center; background: var(--surface-raised); border: 1px solid var(--border-subtle); color: var(--text-2); flex: none; }
+.ico svg { width: 18px; height: 18px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.foot3 { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--border-subtle); margin: 16px calc(var(--pad) * -1) calc(var(--pad) * -1); }
+.foot3 > div { padding: 14px var(--pad); } .foot3 > div + div { border-left: 1px solid var(--border-subtle); }
+.foot3 .v { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.empty { min-height: 200px; display: grid; place-items: center; text-align: center; color: var(--text-3); font-size: 13px; border: 1px dashed var(--border); border-radius: var(--r-control); }
+.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rank li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 7px 8px; border-radius: var(--r-compact); }
+.rank li:hover { background: var(--surface-raised); }
+.rank .n { font-size: 12px; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+.rank li:nth-child(-n+3) .n { color: var(--signal); font-weight: 600; }
+.rank .nm { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank .bar { height: 4px; border-radius: 2px; background: var(--chart-grid); margin-top: 5px; overflow: hidden; }
+.rank .bar i { display: block; height: 100%; border-radius: 2px; background: var(--signal); opacity: .85; }
+.rank .v { font-size: 12px; color: var(--text-2); }
+.sec-h { display: flex; align-items: baseline; gap: 10px; margin: 4px 2px 12px; }
+.sec-h h2 { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--text-2); margin: 0; }
+.sec-h h2::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 2px; background: var(--signal); margin-right: 8px; vertical-align: middle; }
+.page-h { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+.page-h h1 { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.grid { display: grid; gap: var(--gap); }
+.sponsor { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.sponsor a { display: flex; gap: 10px; align-items: center; padding: 12px; border-radius: var(--r-control); border: 1px solid var(--border-subtle); background: var(--surface); }
+.sponsor a:hover { border-color: var(--border-strong); }
+.sponsor .lg { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-raised); display: grid; place-items: center; font-size: 12px; color: var(--text-2); }
+
+/* ===== Variant A ===== */
+.a-kpis { grid-template-columns: repeat(3, 1fr); }
+.a-two { grid-template-columns: 1fr 1fr; }
+/* ===== Variant B ===== */
+.b-health { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding: 14px var(--pad); }
+.b-health .items { display: flex; gap: 10px; flex-wrap: wrap; }
+.b-band { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; }
+.b-band > a { padding: var(--pad); border-radius: 0; }
+.b-band > a + a { border-left: 1px solid var(--border-subtle); }
+.b-band > a:first-child { border-radius: var(--r-object) 0 0 var(--r-object); }
+.b-band > a:last-child { border-radius: 0 var(--r-object) var(--r-object) 0; }
+.b-band > a:hover { background: var(--surface-raised); }
+.b-main { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+/* ===== Variant C ===== */
+.c-cols { grid-template-columns: 1fr 1fr; align-items: start; }
+.c-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.c-mini { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.c-srv { display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center; }
+
+@media (max-width: 1100px) {
+  .a-kpis, .b-band { grid-template-columns: repeat(2, 1fr); }
+  .b-band > a { border-radius: 0 !important; border-left: 0 !important; border-top: 1px solid var(--border-subtle); }
+  .a-two, .b-main, .c-cols { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); } .side { display: none; } .top-r .ibtn:not(#themeTop) { display: none; }
+  .a-kpis, .b-band, .c-mini, .c-hero { grid-template-columns: 1fr; }
+  .b-health { grid-template-columns: 1fr; }
+  :root { --gutter: 16px; }
+}
+
+/* ===== Prototype switcher（不属于设计） ===== */
+.proto { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: #fff; color: #111; box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 2px #3b82f6; font: 500 12px/1 system-ui, sans-serif; }
+.proto button { border: 0; background: #eef2ff; color: #1e3a8a; padding: 7px 10px; border-radius: 999px; cursor: pointer; font: inherit; }
+.proto button.on { background: #1e3a8a; color: #fff; }
+.proto .lbl { padding: 0 8px; min-width: 150px; text-align: center; }
+.proto .sep { width: 1px; height: 20px; background: #cbd5e1; margin: 0 4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><i>P</i>PPanel</div>
+    <a class="nav-i on" href="#">仪表盘</a>
+    <div class="nav-g">运维</div>
+    <a class="nav-i" href="#">服务器管理</a><a class="nav-i" href="#">节点管理</a><a class="nav-i" href="#">订阅配置</a><a class="nav-i" href="#">商品管理</a>
+    <div class="nav-g">商业</div>
+    <a class="nav-i" href="#">订单管理</a><a class="nav-i" href="#">佣金管理</a><a class="nav-i" href="#">优惠券管理</a><a class="nav-i" href="#">营销管理</a><a class="nav-i" href="#">公告管理</a>
+    <div class="nav-g">用户与支持</div>
+    <a class="nav-i" href="#">用户管理</a><a class="nav-i" href="#">工单管理</a><a class="nav-i" href="#">文档管理</a>
+    <div class="nav-g">系统</div>
+    <a class="nav-i" href="#">系统配置</a><a class="nav-i" href="#">认证控制</a><a class="nav-i" href="#">支付配置</a><a class="nav-i" href="#">广告配置</a>
+  </aside>
+  <div>
+    <header class="top">
+      <div class="crumb">PPanel / <b>仪表盘</b></div>
+      <div class="top-r">
+        <button class="ibtn">Asia/Shanghai</button>
+        <button class="ibtn">简体中文</button>
+        <button class="ibtn" id="themeTop" aria-label="切换主题">◐</button>
+        <div class="avatar">AD</div>
+      </div>
+    </header>
+    <main class="main" id="app"></main>
+  </div>
+</div>
+
+<div class="proto" role="toolbar" aria-label="Prototype switcher">
+  <button id="prev" aria-label="上一个变体">←</button>
+  <span class="lbl" id="vlabel"></span>
+  <button id="next" aria-label="下一个变体">→</button>
+  <span class="sep"></span>
+  <button data-scn="normal">正常</button>
+  <button data-scn="alert">需关注</button>
+  <button data-scn="empty">空数据</button>
+  <span class="sep"></span>
+  <button id="themeBtn">主题</button>
+</div>
+
+<script>
+/* ---------- Mock data：字段对应 getConsoleServer / getConsoleTicket / getConsoleRevenue / getConsoleUser ---------- */
+const nodeNames = ["HK-BGP-01","JP-Tokyo-03","SG-Equinix-02","US-LAX-CN2","HK-HKT-04","TW-Hinet-01","JP-Osaka-02","KR-Seoul-01","DE-FRA-01","UK-LON-02"];
+function series(n, base, amp, seed) { const o=[]; let s=seed; for (let i=0;i<n;i++){ s=(s*9301+49297)%233280; o.push(Math.max(0, Math.round(base + amp*Math.sin(i/2.6) + (s/233280-.5)*amp))); } return o; }
+const SCN = {
+  normal: {
+    online_users: 1284, today_upload: 186e9, today_download: 2.23e12, monthly_upload: 3.9e12, monthly_download: 44.8e12,
+    online_servers: 36, offline_servers: 0, tickets: 0, webVersion: "a1b9e3f", serverVersion: "1.4.2",
+    rev: { today: { new: 214000, renew: 168000 }, month: { new: 5120000, renew: 4525000, daily: series(21, 420000, 160000, 7) }, all: { total: 128_430_000, monthly: series(12, 9_000_000, 3_000_000, 3) } },
+    usr: { today: { register: 142, new: 38, renew: 51 }, month: { register: 2861, new: 742, renew: 1033, daily: series(21, 130, 50, 11) }, all: { register: 48120, monthly: series(12, 3800, 1200, 5) } },
+    nodes: nodeNames.map((n,i)=>({ name:n, v: Math.round(620e9 / (1 + i*0.55)) })),
+    users: ["sub_8f21","sub_03ac","sub_77d0","sub_c912","sub_51be","sub_e4a7","sub_2b90","sub_9f13","sub_6d4e","sub_a0c5"].map((n,i)=>({ name:n, uid: 10200+i*37, v: Math.round(96e9/(1+i*0.7)) })),
+  },
+};
+SCN.alert = { ...SCN.normal, online_servers: 34, offline_servers: 2, tickets: 7, serverVersion: "1.4.2" };
+SCN.empty = { online_users: 0, today_upload: 0, today_download: 0, monthly_upload: 0, monthly_download: 0, online_servers: 0, offline_servers: 0, tickets: 0, webVersion: "a1b9e3f", serverVersion: null,
+  rev: { today: { new: 0, renew: 0 }, month: { new: 0, renew: 0, daily: [] }, all: { total: 0, monthly: [] } },
+  usr: { today: { register: 0, new: 0, renew: 0 }, month: { register: 0, new: 0, renew: 0, daily: [] }, all: { register: 0, monthly: [] } },
+  nodes: [], users: [] };
+
+/* ---------- Helpers ---------- */
+const fmtB = b => { if (!b) return "0 B"; const u=["B","KB","MB","GB","TB","PB"]; const i=Math.floor(Math.log(b)/Math.log(1024)); return (b/1024**i).toFixed(i>=3?2:0)+" "+u[i]; };
+const money = c => "¥" + (c/100).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const moneyShort = c => { const y=c/100; return y>=10000 ? "¥"+(y/10000).toFixed(1)+"万" : "¥"+Math.round(y).toLocaleString("zh-CN"); };
+const int = n => n.toLocaleString("zh-CN");
+const ICON = {
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M15.5 4.8a3.3 3.3 0 0 1 0 6.4M17.5 14.8c2 .6 3.4 2.4 3.9 5.2"/></svg>',
+  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 4v14m0 0-3-3m3 3 3-3M17 20V6m0 0-3 3m3-3 3 3"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.6A3.3 3.3 0 0 0 7 18Z"/></svg>',
+  server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="4" width="17" height="7" rx="2"/><rect x="3.5" y="13" width="17" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+  ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z"/><path d="M9 10h6M9 13h4"/></svg>',
+  chip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/></svg>',
+};
+const EMPTY = (t="暂无数据") => `<div class="empty"><div>${t}<div class="meta" style="margin-top:4px">有数据后自动显示</div></div></div>`;
+
+/* ---------- Charts（纯 SVG，仅示意视觉） ---------- */
+function donut(segs, center, sub, size=168) {
+  const tot = segs.reduce((a,s)=>a+s.v,0); if (!tot) return EMPTY();
+  const r=size/2-14, c=2*Math.PI*r; let off=0;
+  const arcs = segs.map(s=>{ const l=c*s.v/tot; const g=segs.length>1?3:0; const el=`<circle r="${r}" cx="${size/2}" cy="${size/2}" fill="none" stroke="${s.c}" stroke-width="14" stroke-dasharray="${Math.max(l-g,0)} ${c}" stroke-dashoffset="${-off}" transform="rotate(-90 ${size/2} ${size/2})"/>`; off+=l; return el; }).join("");
+  return `<div style="display:grid;place-items:center"><svg width="${size}" height="${size}" role="img" aria-label="${sub}"><circle r="${r}" cx="${size/2}" cy="${size/2}" fill="none" stroke="var(--chart-grid)" stroke-width="14"/>${arcs}
+    <text x="50%" y="47%" text-anchor="middle" fill="var(--text-1)" font-size="20" font-weight="600" class="num">${center}</text>
+    <text x="50%" y="61%" text-anchor="middle" fill="var(--text-3)" font-size="12">${sub}</text></svg></div>`;
+}
+function bars(stacks, colors, h=200) {
+  if (!stacks.length) return EMPTY();
+  const W=600, pad=24, max=Math.max(...stacks.map(s=>s.reduce((a,b)=>a+b,0)))*1.1, bw=(W-pad)/stacks.length;
+  let g=""; for (let i=1;i<=3;i++){ const y=h-(h-10)*i/3; g+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--chart-grid)"/>`; }
+  const b = stacks.map((s,i)=>{ let y=h; return s.map((v,k)=>{ const bh=(h-10)*v/max; y-=bh; return `<rect x="${pad+i*bw+bw*0.22}" y="${y}" width="${bw*0.56}" height="${Math.max(bh-1,0)}" rx="2" fill="${colors[k]}"/>`; }).join(""); }).join("");
+  const lbl = stacks.map((_,i)=> i%5===0 ? `<text x="${pad+i*bw+bw/2}" y="${h+16}" text-anchor="middle" font-size="11" fill="var(--text-3)">${i+1}日</text>`:"").join("");
+  return `<svg viewBox="0 0 ${W} ${h+22}" width="100%" preserveAspectRatio="none" style="display:block;height:${h+22}px">${g}${b}${lbl}</svg>`;
+}
+function area(vals, color, h=200, labels) {
+  if (!vals.length) return EMPTY();
+  const W=600, max=Math.max(...vals)*1.15, step=W/(vals.length-1);
+  const pts = vals.map((v,i)=>[i*step, h-(h-8)*v/max]);
+  const line = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const id = "g"+Math.random().toString(36).slice(2,7);
+  let g=""; for (let i=1;i<=3;i++){ const y=h-(h-8)*i/3; g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--chart-grid)"/>`; }
+  const lbl = (labels||[]).map((t,i)=> i%2===0 ? `<text x="${Math.min(Math.max(i*step,14),W-14)}" y="${h+16}" text-anchor="middle" font-size="11" fill="var(--text-3)">${t}</text>`:"").join("");
+  return `<svg viewBox="0 0 ${W} ${h+22}" width="100%" preserveAspectRatio="none" style="display:block;height:${h+22}px"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>${g}
+    <path d="${line} L${W} ${h} L0 ${h} Z" fill="url(#${id})"/><path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+const months = ["11月","12月","1月","2月","3月","4月","5月","6月","7月","8月","9月","10月"];
+function rankList(items, mono) {
+  if (!items.length) return EMPTY();
+  const max = items[0].v;
+  return `<ol class="rank">${items.map((it,i)=>`<li><span class="n">${i+1}</span><div style="min-width:0"><div class="nm ${mono?'mono':''}">${it.name}</div><div class="bar"><i style="width:${(it.v/max*100).toFixed(1)}%"></i></div></div><span class="v num mono">${fmtB(it.v)}</span></li>`).join("")}</ol>`;
+}
+
+/* ---------- Shared state ---------- */
+const S = { revTab: "today", usrTab: "today", rankDay: "today", rankType: "nodes", bTab: "rev" };
+const seg = (key, opts) => `<div class="seg" role="tablist">${opts.map(([v,t])=>`<button role="tab" aria-selected="${S[key]===v}" class="${S[key]===v?'on':''}" data-k="${key}" data-v="${v}">${t}</button>`).join("")}</div>`;
+const C = { a: "var(--signal)", b: "var(--info)", c: "var(--structure)" };
+
+const hasRev = d => d.rev.today.new + d.rev.today.renew > 0;
+const hasUsr = d => d.usr.today.register + d.usr.today.new + d.usr.today.renew > 0;
+function revBody(d, h=200) {
+  if (!hasRev(d)) return EMPTY();
+  if (S.revTab === "today") return donut([{v:d.rev.today.new,c:C.a},{v:d.rev.today.renew,c:C.b}], money(d.rev.today.new+d.rev.today.renew), "今日总收入") + `<div class="legend" style="justify-content:center;margin-top:10px"><span><i style="background:${C.a}"></i>新购</span><span><i style="background:${C.b}"></i>续费</span></div>`;
+  if (S.revTab === "month") return bars(d.rev.month.daily.map(v=>[v*.55, v*.45]), [C.a, C.b], h) + `<div class="legend" style="margin-top:8px"><span><i style="background:${C.a}"></i>新购</span><span><i style="background:${C.b}"></i>续费</span></div>`;
+  return area(d.rev.all.monthly, C.a, h, months);
+}
+function revFoot(d) {
+  const t = S.revTab==="today"? d.rev.today : S.revTab==="month"? d.rev.month : null;
+  if (!t) return `<div class="foot3"><div><div class="meta">累计总收入</div><div class="v">${money(d.rev.all.total)}</div></div><div><div class="meta">近 12 月</div><div class="v">${money(d.rev.all.monthly.reduce((a,b)=>a+b,0))}</div></div><div></div></div>`;
+  return `<div class="foot3"><div><div class="meta">新购</div><div class="v">${money(t.new)}</div></div><div><div class="meta">续费</div><div class="v">${money(t.renew)}</div></div><div><div class="meta">总收入</div><div class="v">${money(t.new+t.renew)}</div></div></div>`;
+}
+function usrBody(d, h=200) {
+  if (!hasUsr(d)) return EMPTY();
+  if (S.usrTab === "today") { const t=d.usr.today; return donut([{v:t.register,c:C.c},{v:t.new,c:C.a},{v:t.renew,c:C.b}], int(t.register+t.new+t.renew), "今日用户动作") + `<div class="legend" style="justify-content:center;margin-top:10px"><span><i style="background:${C.c}"></i>注册</span><span><i style="background:${C.a}"></i>新购</span><span><i style="background:${C.b}"></i>续费</span></div>`; }
+  if (S.usrTab === "month") return bars(d.usr.month.daily.map(v=>[v*.6, v*.18, v*.22]), [C.c, C.a, C.b], h) + `<div class="legend" style="margin-top:8px"><span><i style="background:${C.c}"></i>注册</span><span><i style="background:${C.a}"></i>新购</span><span><i style="background:${C.b}"></i>续费</span></div>`;
+  return area(d.usr.all.monthly, C.b, h, months);
+}
+function usrFoot(d) {
+  const t = S.usrTab==="today"? d.usr.today : S.usrTab==="month"? d.usr.month : null;
+  if (!t) return `<div class="foot3"><div><div class="meta">累计注册</div><div class="v">${int(d.usr.all.register)}</div></div><div></div><div></div></div>`;
+  return `<div class="foot3"><div><div class="meta">注册</div><div class="v">${int(t.register)}</div></div><div><div class="meta">新购</div><div class="v">${int(t.new)}</div></div><div><div class="meta">续费</div><div class="v">${int(t.renew)}</div></div></div>`;
+}
+const tabs3 = k => seg(k, [["today","今日"],["month","月"],["total","总计"]].map(([v,t])=>[v==="total"?"all":v,t]));
+function rankItems(d, type) { const it = type==="nodes"? d.nodes : d.users; return S.rankDay==="today"? it : it.map(x=>({...x, v: Math.round(x.v*0.92)})); }
+function srvBadge(d) {
+  const tot=d.online_servers+d.offline_servers; if (!tot) return `<span class="badge mute">未接入服务器</span>`;
+  return d.offline_servers ? `<span class="badge bad"><i class="dot"></i>${d.offline_servers} 台离线</span>` : `<span class="badge ok"><i class="dot"></i>全部在线</span>`;
+}
+const tkBadge = d => d.tickets ? `<span class="badge warn"><i class="dot"></i>${d.tickets} 个待处理</span>` : `<span class="badge ok"><i class="dot"></i>无待处理</span>`;
+const verRows = d => `
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span class="label">Web 版本</span><span class="badge mute mono">${d.webVersion}</span></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span class="label">服务端版本</span><span class="badge mute mono">${d.serverVersion? "V"+d.serverVersion : "—"}</span></div>`;
+function sponsor() {
+  return `<div style="margin-top:28px"><div class="sec-h"><h2>赞助</h2><span class="meta">赞助帮助 PPanel 继续发布更新！</span></div>
+  <div class="sponsor">${["Alpha Cloud","Nebula IDC","Kite Network"].map(n=>`<a href="#"><span class="lg">${n[0]}</span><div><div style="font-size:13px;font-weight:500">${n}</div><div class="meta">赞助商描述文字</div></div></a>`).join("")}</div></div>`;
+}
+
+/* ---------- Variant A：沿用现有结构，只换视觉语言 ---------- */
+function VariantA(d) {
+  const kpi = (href, icon, title, v, sub, state="") => `<a class="card" ${href?`href="#${href}"`:'style="pointer-events:none"'}><div style="display:flex;justify-content:space-between;gap:12px"><div style="min-width:0"><div class="label">${title}</div><div class="kpi-v">${v}</div><div class="meta num">${sub}</div></div><div class="ico" ${state}>${ICON[icon]}</div></div></a>`;
+  const srvTot = d.online_servers+d.offline_servers;
+  return `
+  <div class="page-h"><div><h1>仪表盘</h1><div class="meta" style="margin-top:4px">数据更新于 刚刚</div></div></div>
+  <div class="grid a-kpis">
+    ${kpi("/dashboard/servers","users","在线用户数", int(d.online_users), "当前在线")}
+    ${kpi("","swap","今日流量", fmtB(d.today_upload+d.today_download), `↑ ${fmtB(d.today_upload)}　↓ ${fmtB(d.today_download)}`)}
+    ${kpi("","cloud","本月流量", fmtB(d.monthly_upload+d.monthly_download), `↑ ${fmtB(d.monthly_upload)}　↓ ${fmtB(d.monthly_download)}`)}
+    <a class="card" href="#/dashboard/servers"><div style="display:flex;justify-content:space-between;gap:12px"><div><div class="label">服务器总数</div><div class="kpi-v">${srvTot}</div><div class="meta num" style="display:flex;gap:10px;align-items:center"><span style="color:var(--success)">在线 ${d.online_servers}</span><span style="color:${d.offline_servers?'var(--danger)':'var(--text-3)'}">离线 ${d.offline_servers}</span></div></div><div class="ico" style="${d.offline_servers?'color:var(--danger);background:var(--danger-soft);border-color:transparent':''}">${ICON.server}</div></div></a>
+    <a class="card" href="#/dashboard/ticket" style="${d.tickets?'border-color:color-mix(in srgb,var(--warning) 40%,transparent)':''}"><div style="display:flex;justify-content:space-between;gap:12px"><div><div class="label">待处理工单</div><div class="kpi-v" style="${d.tickets?'color:var(--warning)':''}">${d.tickets}</div><div class="meta">待处理</div></div><div class="ico" style="${d.tickets?'color:var(--warning);background:var(--warning-soft);border-color:transparent':''}">${ICON.ticket}</div></div></a>
+    <div class="card"><div class="card-h" style="margin-bottom:6px"><div class="label">系统服务</div><button class="btn danger">系统重启</button></div>${verRows(d)}</div>
+  </div>
+  <div class="grid a-two" style="margin-top:var(--gap)">
+    <div class="card"><div class="card-h"><h3 class="card-t">收入统计</h3>${tabs3("revTab")}</div><div style="min-height:230px">${revBody(d)}</div>${revFoot(d)}</div>
+    <div class="card"><div class="card-h"><h3 class="card-t">用户统计</h3>${tabs3("usrTab")}</div><div style="min-height:230px">${usrBody(d)}</div>${usrFoot(d)}</div>
+  </div>
+  <div class="grid a-two" style="margin-top:var(--gap)">
+    <div class="card"><div class="card-h"><h3 class="card-t">节点流量</h3>${seg("rankDay",[["today","今日"],["yesterday","昨日"]])}</div>${rankList(rankItems(d,"nodes"))}</div>
+    <div class="card"><div class="card-h"><h3 class="card-t">用户流量</h3>${seg("rankDay",[["today","今日"],["yesterday","昨日"]])}</div>${rankList(rankItems(d,"users"), true)}</div>
+  </div>
+  ${sponsor()}`;
+}
+
+/* ---------- Variant B：运维优先，状态条 + 指标带 + 主图/排行 ---------- */
+function VariantB(d) {
+  const band = (href, title, v, sub) => `<a ${href?`href="#${href}"`:'style="pointer-events:none"'}><div class="label">${title}</div><div class="kpi-v">${v}</div><div class="meta num">${sub}</div></a>`;
+  const attention = d.offline_servers || d.tickets;
+  const noSrv = !(d.online_servers + d.offline_servers);
+  return `
+  <div class="page-h"><div><h1>仪表盘</h1><div class="meta" style="margin-top:4px">数据更新于 刚刚</div></div>
+    <span class="badge ${attention?'warn':noSrv?'mute':'ok'}"><i class="dot"></i>${attention? "有事项需要处理": noSrv? "尚未接入服务器" : "系统运行正常"}</span></div>
+  <div class="card b-health" style="${attention?'border-color:color-mix(in srgb,var(--warning) 35%,transparent)':''}">
+    <div class="label" style="font-weight:600;color:var(--text-1)">运行状态</div>
+    <div class="items">
+      <a href="#/dashboard/servers" class="badge ${d.offline_servers?'bad':'mute'}" style="height:28px;padding:0 12px">服务器 ${d.online_servers}/${d.online_servers+d.offline_servers} 在线${d.offline_servers?` · ${d.offline_servers} 台离线`:''}</a>
+      <a href="#/dashboard/ticket" class="badge ${d.tickets?'warn':'mute'}" style="height:28px;padding:0 12px">工单 ${d.tickets? d.tickets+" 个待处理":"无待处理"}</a>
+      <span class="badge mute mono" style="height:28px;padding:0 12px">Web ${d.webVersion}</span>
+      <span class="badge mute mono" style="height:28px;padding:0 12px">Server ${d.serverVersion? "V"+d.serverVersion:"—"}</span>
+    </div>
+    <button class="btn danger">系统重启</button>
+  </div>
+  <div class="card b-band" style="margin-top:var(--gap)">
+    ${band("/dashboard/servers","在线用户数", int(d.online_users), "当前在线")}
+    ${band("","今日收入", money(d.rev.today.new+d.rev.today.renew), `新购 ${moneyShort(d.rev.today.new)} · 续费 ${moneyShort(d.rev.today.renew)}`)}
+    ${band("","今日流量", fmtB(d.today_upload+d.today_download), `↑ ${fmtB(d.today_upload)}　↓ ${fmtB(d.today_download)}`)}
+    ${band("","本月流量", fmtB(d.monthly_upload+d.monthly_download), `↑ ${fmtB(d.monthly_upload)}　↓ ${fmtB(d.monthly_download)}`)}
+  </div>
+  <div class="grid b-main" style="margin-top:var(--gap)">
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="card-h"><div style="display:flex;gap:16px;align-items:center">${seg("bTab",[["rev","收入统计"],["usr","用户统计"]])}</div>${tabs3(S.bTab==="rev"?"revTab":"usrTab")}</div>
+      <div style="min-height:262px;flex:1;display:grid;align-content:center">${S.bTab==="rev"? revBody(d,240): usrBody(d,240)}</div>
+      ${S.bTab==="rev"? revFoot(d): usrFoot(d)}
+    </div>
+    <div class="card">
+      <div class="card-h"><h3 class="card-t">流量排行</h3>${seg("rankDay",[["today","今日"],["yesterday","昨日"]])}</div>
+      <div style="margin:-6px 0 12px">${seg("rankType",[["nodes","节点"],["users","用户"]])}</div>
+      ${rankList(rankItems(d,S.rankType), S.rankType==="users")}
+    </div>
+  </div>
+  ${sponsor()}`;
+}
+
+/* ---------- Variant C：按领域分两栏（业务 | 运行） ---------- */
+function VariantC(d) {
+  const tot = d.online_servers + d.offline_servers;
+  const ring = tot ? donut([{v:d.online_servers,c:"var(--success)"},{v:d.offline_servers,c:"var(--danger)"}], `${d.online_servers}/${tot}`, "在线", 96).replace(/font-size="20"/,'font-size="15"').replace(/font-size="12">在线/,'font-size="10">在线') : `<div class="ico" style="width:96px;height:96px;border-radius:50%">${ICON.server}</div>`;
+  return `
+  <div class="page-h"><div><h1>仪表盘</h1><div class="meta" style="margin-top:4px">数据更新于 刚刚</div></div></div>
+  <div class="grid c-cols">
+    <section>
+      <div class="sec-h"><h2>业务</h2><span class="meta">收入与用户</span></div>
+      <div class="card">
+        <div class="card-h"><h3 class="card-t">收入统计</h3><span class="meta">本月每日 · 新购 / 续费</span></div>
+        <div class="c-hero" style="margin-bottom:12px">
+          <div><div class="label">今日收入</div><div class="kpi-v xl" style="color:var(--signal)">${money(d.rev.today.new+d.rev.today.renew)}</div><div class="meta">新购 ${moneyShort(d.rev.today.new)} · 续费 ${moneyShort(d.rev.today.renew)}</div></div>
+          <div><div class="label">本月收入</div><div class="kpi-v xl">${money(d.rev.month.new+d.rev.month.renew)}</div><div class="meta">累计 ${moneyShort(d.rev.all.total)}</div></div>
+        </div>
+        <div style="min-height:200px">${bars(d.rev.month.daily.map(v=>[v*.55,v*.45]),[C.a,C.b],160)}</div>
+      </div>
+      <div class="card" style="margin-top:var(--gap)">
+        <div class="card-h"><h3 class="card-t">用户统计</h3>${tabs3("usrTab")}</div>
+        <div style="min-height:200px">${usrBody(d,160)}</div>${usrFoot(d)}
+      </div>
+    </section>
+    <section>
+      <div class="sec-h"><h2>运行</h2><span class="meta">服务器、流量与工单</span></div>
+      <div class="c-mini">
+        <a class="card" href="#/dashboard/servers"><div class="c-srv">${ring}<div><div class="label">服务器</div><div style="margin:8px 0">${srvBadge(d)}</div><div class="meta">在线用户 <b class="num" style="color:var(--text-1);font-weight:600">${int(d.online_users)}</b></div></div></div></a>
+        <a class="card" href="#/dashboard/ticket" style="${d.tickets?'border-color:color-mix(in srgb,var(--warning) 40%,transparent)':''}"><div class="label">待处理工单</div><div class="kpi-v" style="${d.tickets?'color:var(--warning)':''}">${d.tickets}</div>${tkBadge(d)}</a>
+        <div class="card"><div class="label">今日流量</div><div class="kpi-v">${fmtB(d.today_upload+d.today_download)}</div><div class="meta num">↑ ${fmtB(d.today_upload)}　↓ ${fmtB(d.today_download)}</div></div>
+        <div class="card"><div class="label">本月流量</div><div class="kpi-v">${fmtB(d.monthly_upload+d.monthly_download)}</div><div class="meta num">↑ ${fmtB(d.monthly_upload)}　↓ ${fmtB(d.monthly_download)}</div></div>
+      </div>
+      <div class="card" style="margin-top:var(--gap)">
+        <div class="card-h"><h3 class="card-t">流量排行</h3><div style="display:flex;gap:8px">${seg("rankType",[["nodes","节点"],["users","用户"]])}${seg("rankDay",[["today","今日"],["yesterday","昨日"]])}</div></div>
+        ${rankList(rankItems(d,S.rankType).slice(0,8), S.rankType==="users")}
+      </div>
+      <div class="card" style="margin-top:var(--gap)"><div class="card-h" style="margin-bottom:6px"><h3 class="card-t">系统服务</h3><button class="btn danger">系统重启</button></div>${verRows(d)}</div>
+    </section>
+  </div>
+  ${sponsor()}`;
+}
+
+/* ---------- Switcher ---------- */
+const VARIANTS = [["A","沿用结构 · 换视觉", VariantA],["B","运维优先 · 状态条", VariantB],["C","领域分栏 · 业务|运行", VariantC]];
+const qs = () => new URLSearchParams(location.search);
+function setQ(k, v) { const p=qs(); p.set(k,v); history.replaceState(null,"","?"+p.toString()); render(); }
+function render() {
+  const p = qs();
+  const vi = Math.max(0, VARIANTS.findIndex(v=>v[0]===(p.get("variant")||"A")));
+  const scn = p.get("scenario") || "normal";
+  document.documentElement.dataset.theme = p.get("theme") || "dark";
+  const [k, name, fn] = VARIANTS[vi];
+  document.getElementById("app").innerHTML = fn(SCN[scn]);
+  document.getElementById("vlabel").textContent = `${k}（${name}）`;
+  document.querySelectorAll("[data-scn]").forEach(b=>b.classList.toggle("on", b.dataset.scn===scn));
+  document.getElementById("themeBtn").textContent = (p.get("theme")||"dark")==="dark" ? "主题：深色" : "主题：浅色";
+}
+function cycle(dir) { const cur = VARIANTS.findIndex(v=>v[0]===(qs().get("variant")||"A")); setQ("variant", VARIANTS[(cur+dir+VARIANTS.length)%VARIANTS.length][0]); }
+document.getElementById("prev").onclick = () => cycle(-1);
+document.getElementById("next").onclick = () => cycle(1);
+document.querySelectorAll("[data-scn]").forEach(b=> b.onclick = () => setQ("scenario", b.dataset.scn));
+const toggleTheme = () => setQ("theme", (qs().get("theme")||"dark")==="dark" ? "light":"dark");
+document.getElementById("themeBtn").onclick = toggleTheme;
+document.getElementById("themeTop").onclick = toggleTheme;
+document.addEventListener("keydown", e => { if (e.target.closest("input,textarea,[contenteditable]")) return; if (e.key==="ArrowLeft") cycle(-1); if (e.key==="ArrowRight") cycle(1); });
+document.getElementById("app").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]"); if (b) { S[b.dataset.k] = b.dataset.v; render(); return; }
+  if (e.target.closest('a[href^="#"]')) e.preventDefault();
+});
+render();
+</script>
+</body>
+</html>
