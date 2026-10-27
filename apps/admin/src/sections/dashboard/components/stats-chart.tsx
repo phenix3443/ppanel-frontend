@@ -61,29 +61,32 @@ export function ChartDataTable({
 }) {
   const { t } = useTranslation("dashboard");
   return (
-    <table className="sr-only" data-chart-table>
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t("home.date", "Date")}</th>
-          {series.map((s) => (
-            <th key={s.key} scope="col">
-              {s.label}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={`${row.label}-${index}`}>
-            <th scope="row">{row.label}</th>
+    // sr-only sits on a wrapper: Firefox paints a <caption> outside its table's clip, so it leaked on screen.
+    <div className="sr-only">
+      <table data-chart-table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t("home.date", "Date")}</th>
             {series.map((s) => (
-              <td key={s.key}>{format(row.values[s.key] ?? 0)}</td>
+              <th key={s.key} scope="col">
+                {s.label}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={`${row.label}-${index}`}>
+              <th scope="row">{row.label}</th>
+              {series.map((s) => (
+                <td key={s.key}>{format(row.values[s.key] ?? 0)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

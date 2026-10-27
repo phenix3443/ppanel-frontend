@@ -151,7 +151,7 @@ describe("revenue and user cards", () => {
       if (!el) throw new Error("no table");
       return el;
     });
-    expect(table.className).toContain("sr-only");
+    expect(table.parentElement?.className).toContain("sr-only");
     expect(table.querySelectorAll("tbody tr")).toHaveLength(2);
     for (const el of document.querySelectorAll("[data-summary-value]")) {
       expect(el.className).toContain("tabular-nums");
