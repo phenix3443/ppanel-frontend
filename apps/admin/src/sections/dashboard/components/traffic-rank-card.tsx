@@ -4,19 +4,18 @@ import {
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
 import { Separator } from "@workspace/ui/components/separator";
-import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 import { cn } from "@workspace/ui/lib/utils";
 import { formatBytes } from "@workspace/ui/utils/formatting";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UserDetail, UserSubscribeDetail } from "@/sections/user/user-detail";
 import { useServerTotal } from "../hooks/use-dashboard-data";
 import { toModuleState } from "../lib/module-state";
 import { ModuleEmpty, ModuleError, ModuleLoading } from "./module-states";
-import { segmentListClass, segmentTriggerClass } from "./segment";
+import { PeriodCard } from "./period-card";
 
 type Day = "today" | "yesterday";
-type Target = "nodes" | "users";
+export type Target = "nodes" | "users";
 
 export type RankRow = {
   key: string;
@@ -135,11 +134,9 @@ function RankList({ rows, target }: { rows: RankRow[]; target: Target }) {
   );
 }
 
-export default function TrafficRankCard() {
+export default function TrafficRankCard({ target }: { target: Target }) {
   const { t } = useTranslation("dashboard");
-  const titleId = useId();
   const [day, setDay] = useState<Day>("today");
-  const [target, setTarget] = useState<Target>("nodes");
   const query = useServerTotal();
   const server = toModuleState(query);
 
@@ -159,45 +156,21 @@ export default function TrafficRankCard() {
   }
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className="flex min-w-0 flex-col gap-4 rounded-2xl border border-ds-border-subtle bg-ds-surface p-5 shadow-ds-highlight"
-      data-module="traffic-rank"
+    <PeriodCard
+      module={`traffic-rank-${target}`}
+      onChange={setDay}
+      options={[
+        ["today", t("today", "Today")],
+        ["yesterday", t("yesterday", "Yesterday")],
+      ]}
+      title={
+        target === "nodes"
+          ? t("nodeTraffic", "Node Traffic")
+          : t("userTraffic", "User Traffic")
+      }
+      value={day}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-semibold text-[15px] text-ds-text-1" id={titleId}>
-          {t("trafficRank", "Traffic Rank")}
-        </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <Tabs onValueChange={(v) => setTarget(v as Target)} value={target}>
-            <TabsList
-              aria-label={t("home.rankTarget", "Ranking target")}
-              className={segmentListClass}
-            >
-              <TabsTrigger className={segmentTriggerClass} value="nodes">
-                {t("nodes", "Nodes")}
-              </TabsTrigger>
-              <TabsTrigger className={segmentTriggerClass} value="users">
-                {t("users", "Users")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Tabs onValueChange={(v) => setDay(v as Day)} value={day}>
-            <TabsList
-              aria-label={t("home.rankDay", "Ranking date")}
-              className={segmentListClass}
-            >
-              <TabsTrigger className={segmentTriggerClass} value="today">
-                {t("today", "Today")}
-              </TabsTrigger>
-              <TabsTrigger className={segmentTriggerClass} value="yesterday">
-                {t("yesterday", "Yesterday")}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
       {body}
-    </section>
+    </PeriodCard>
   );
 }

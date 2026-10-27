@@ -132,13 +132,12 @@ export const routerMock = () => ({
   Link: ({
     to,
     children,
-    className,
+    ...rest
   }: {
     to: string;
     children: ReactNode;
-    className?: string;
-  }) => (
-    <a className={className} href={to}>
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...rest} href={to}>
       {children}
     </a>
   ),
