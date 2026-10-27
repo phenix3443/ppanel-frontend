@@ -20,6 +20,9 @@ const teekConfig = defineTeekConfig({
 export default defineConfig({
   extends: teekConfig,
 
+  // plans/ holds internal engineering plans, not user-facing docs.
+  srcExclude: ["plans/**"],
+
   title: "PPanel",
   description:
     "PPanel is a pure, professional, and perfect open-source proxy panel tool, designed to be your ideal choice for learning and practical use.",
