@@ -1,0 +1,156 @@
+@import "@workspace/ui/globals.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+
+/*
+ * Admin Home design tokens (docs/plans/admin-home-b.md).
+ *
+ * :root / .dark only define --ds-* and never touch shadcn variables, so every
+ * admin page outside Home renders exactly as before. shadcn variables are
+ * remapped only inside .admin-home and on the frame while Home is mounted.
+ * Values come from the finalized prototype README (3ccb483).
+ */
+
+:root {
+  --ds-canvas: #f1f0ed;
+  --ds-foundation: #e7e4df;
+  --ds-surface: #fcfbf8;
+  --ds-surface-raised: #f7f6f3;
+  --ds-border-subtle: rgba(82, 76, 70, 0.12);
+  --ds-border: rgba(82, 76, 70, 0.18);
+  --ds-border-strong: rgba(82, 76, 70, 0.34);
+  --ds-text-1: #292725;
+  --ds-text-2: #625e59;
+  --ds-text-3: #6b665f;
+  --ds-signal: #a64b00;
+  --ds-signal-soft: rgba(217, 119, 6, 0.12);
+  --ds-on-signal: #ffffff;
+  --ds-success: #2f6d52;
+  --ds-success-soft: rgba(52, 119, 90, 0.12);
+  --ds-danger: #a3443d;
+  --ds-danger-soft: rgba(185, 80, 73, 0.12);
+  --ds-warning: #785c00;
+  --ds-warning-soft: rgba(120, 92, 0, 0.12);
+  --ds-info: #456a83;
+  --ds-info-soft: rgba(77, 116, 143, 0.12);
+  --ds-structure: #817a72;
+  --ds-chart-grid: rgba(82, 76, 70, 0.1);
+  --ds-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --ds-font-sans:
+    "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans SC", system-ui, sans-serif;
+  --ds-font-mono:
+    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+.dark {
+  --ds-canvas: #151412;
+  --ds-foundation: #1e1c19;
+  --ds-surface: #25221e;
+  --ds-surface-raised: #2d2924;
+  --ds-border-subtle: rgba(236, 226, 214, 0.12);
+  --ds-border: rgba(236, 226, 214, 0.18);
+  --ds-border-strong: rgba(236, 226, 214, 0.32);
+  --ds-text-1: #f2ede5;
+  --ds-text-2: #c8c0b7;
+  --ds-text-3: #9e958b;
+  --ds-signal: #e99432;
+  --ds-signal-soft: rgba(233, 148, 50, 0.14);
+  --ds-on-signal: #24170b;
+  --ds-success: #67bd91;
+  --ds-success-soft: rgba(103, 189, 145, 0.14);
+  --ds-danger: #ee8178;
+  --ds-danger-soft: rgba(238, 129, 120, 0.14);
+  --ds-warning: #e3c160;
+  --ds-warning-soft: rgba(227, 193, 96, 0.14);
+  --ds-info: #79acd0;
+  --ds-info-soft: rgba(121, 172, 208, 0.14);
+  --ds-structure: #9e958b;
+  --ds-chart-grid: rgba(236, 226, 214, 0.08);
+  --ds-highlight: inset 0 1px 0 rgba(255, 248, 238, 0.05);
+}
+
+@theme inline {
+  --color-ds-canvas: var(--ds-canvas);
+  --color-ds-foundation: var(--ds-foundation);
+  --color-ds-surface: var(--ds-surface);
+  --color-ds-surface-raised: var(--ds-surface-raised);
+  --color-ds-border-subtle: var(--ds-border-subtle);
+  --color-ds-border: var(--ds-border);
+  --color-ds-border-strong: var(--ds-border-strong);
+  --color-ds-text-1: var(--ds-text-1);
+  --color-ds-text-2: var(--ds-text-2);
+  --color-ds-text-3: var(--ds-text-3);
+  --color-ds-signal: var(--ds-signal);
+  --color-ds-signal-soft: var(--ds-signal-soft);
+  --color-ds-on-signal: var(--ds-on-signal);
+  --color-ds-success: var(--ds-success);
+  --color-ds-success-soft: var(--ds-success-soft);
+  --color-ds-danger: var(--ds-danger);
+  --color-ds-danger-soft: var(--ds-danger-soft);
+  --color-ds-warning: var(--ds-warning);
+  --color-ds-warning-soft: var(--ds-warning-soft);
+  --color-ds-info: var(--ds-info);
+  --color-ds-info-soft: var(--ds-info-soft);
+  --color-ds-structure: var(--ds-structure);
+  --color-ds-chart-grid: var(--ds-chart-grid);
+  --font-ds-sans: var(--ds-font-sans);
+  --font-ds-mono: var(--ds-font-mono);
+  --shadow-ds-highlight: var(--ds-highlight);
+}
+
+/* Frame: sidebar. On body so the narrow-screen sidebar Sheet portal gets it. */
+body:has([data-admin-home]) {
+  --sidebar: var(--ds-foundation);
+  --sidebar-foreground: var(--ds-text-2);
+  --sidebar-primary: var(--ds-signal);
+  --sidebar-primary-foreground: var(--ds-on-signal);
+  --sidebar-accent: var(--ds-signal-soft);
+  --sidebar-accent-foreground: var(--ds-signal);
+  --sidebar-border: var(--ds-border-subtle);
+  --sidebar-ring: var(--ds-signal);
+}
+
+/* Frame: header and content container. Only their own background changes;
+   --background stays untouched so header controls keep their original look. */
+[data-slot="sidebar-inset"]:has([data-admin-home]),
+[data-slot="sidebar-inset"]:has([data-admin-home]) > header {
+  background-color: var(--ds-canvas);
+}
+
+[data-slot="sidebar-inset"]:has([data-admin-home]) > header {
+  --foreground: var(--ds-text-1);
+  --muted-foreground: var(--ds-text-2);
+}
+
+/* Home content and Home portals (restart dialog, user detail popover). */
+.admin-home {
+  --background: var(--ds-canvas);
+  --foreground: var(--ds-text-1);
+  --card: var(--ds-surface);
+  --card-foreground: var(--ds-text-1);
+  --popover: var(--ds-surface);
+  --popover-foreground: var(--ds-text-1);
+  --border: var(--ds-border-subtle);
+  --input: var(--ds-border);
+  --muted: var(--ds-surface-raised);
+  --muted-foreground: var(--ds-text-2);
+  --accent: var(--ds-surface-raised);
+  --accent-foreground: var(--ds-text-1);
+  --primary: var(--ds-signal);
+  --primary-foreground: var(--ds-on-signal);
+  --ring: var(--ds-signal);
+  --chart-1: var(--ds-signal);
+  --chart-2: var(--ds-info);
+  --chart-3: var(--ds-structure);
+  --radius: 0.625rem;
+  font-family: var(--ds-font-sans);
+  color: var(--ds-text-1);
+}
+
+/* Home cards (including the shared sponsor cards) drop the default shadow. */
+.admin-home [data-slot="card"] {
+  box-shadow: var(--ds-highlight);
+  border-color: var(--ds-border-subtle);
+}
