@@ -28,7 +28,7 @@ export default function SystemRestart() {
     <AlertDialog onOpenChange={setOpenRestart} open={openRestart}>
       <AlertDialogTrigger asChild>
         <Button
-          className="@3xl/home:w-auto w-full border-ds-danger/40 text-ds-danger hover:bg-ds-danger-soft hover:text-ds-danger"
+          className="h-8 shrink-0 border-ds-danger/40 text-ds-danger hover:bg-ds-danger-soft hover:text-ds-danger"
           size="sm"
           variant="outline"
         >

@@ -32,11 +32,9 @@ const LONG_NAME = "node-".padEnd(60, "x");
 describe("traffic rank card", () => {
   it("shows the empty state, not NaN, when rankings are empty", async () => {
     mockApi(request, { server: serverData() });
-    renderWithClient(<TrafficRankCard />);
+    renderWithClient(<TrafficRankCard target="nodes" />);
 
     expect(await screen.findByText("No data yet")).toBeTruthy();
-    selectTab("Users");
-    expect(screen.getByText("No data yet")).toBeTruthy();
     selectTab("Yesterday");
     expect(screen.getByText("No data yet")).toBeTruthy();
     expect(document.body.textContent).not.toContain("NaN");
@@ -51,7 +49,7 @@ describe("traffic rank card", () => {
         ],
       }),
     });
-    renderWithClient(<TrafficRankCard />);
+    renderWithClient(<TrafficRankCard target="nodes" />);
 
     const name = await screen.findByText(LONG_NAME);
     expect(name.getAttribute("title")).toBe(LONG_NAME);
@@ -70,11 +68,9 @@ describe("traffic rank card", () => {
         ],
       }),
     });
-    renderWithClient(<TrafficRankCard />);
+    renderWithClient(<TrafficRankCard target="users" />);
 
-    await screen.findByText("No data yet");
-    selectTab("Users");
-    const trigger = screen.getByRole("button", {
+    const trigger = await screen.findByRole("button", {
       name: "Subscription 42 details",
     });
     fireEvent.click(trigger);
@@ -84,7 +80,7 @@ describe("traffic rank card", () => {
 
   it("shows a retryable error", async () => {
     mockApi(request, { server: new Error("x") });
-    renderWithClient(<TrafficRankCard />);
+    renderWithClient(<TrafficRankCard target="nodes" />);
     expect(await screen.findByText("Failed to load data")).toBeTruthy();
   });
 });

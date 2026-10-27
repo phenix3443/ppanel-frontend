@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-  cleanup,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import {
   afterEach,
   beforeAll,
@@ -56,13 +50,12 @@ afterEach(() => {
 const offlineTwo = serverData({ online_servers: 34, offline_servers: 2 });
 const healthyServer = serverData({ online_servers: 3 });
 
-function overall() {
-  // Last child is the label; the leading icon is aria-hidden.
-  return document.querySelector("[data-health] > span:last-child")?.textContent;
+function card(id: string) {
+  return document.querySelector(`[data-kpi="${id}"]`) as HTMLElement;
 }
 
-describe("Home layout B", () => {
-  it("orders header → status → metrics → statistics/ranking → sponsors", async () => {
+describe("Home layout A", () => {
+  it("orders header → KPI cards → revenue|users → node|user traffic → sponsors", async () => {
     mockApi(request, {
       server: healthyServer,
       ticket: { count: 0 },
@@ -70,14 +63,17 @@ describe("Home layout B", () => {
       user: emptyUserStats,
     });
     renderWithClient(<Dashboard />);
-    await waitFor(() => expect(overall()).toBe("All systems normal"));
+    await waitFor(() =>
+      expect(card("server").textContent).toContain("Online 3")
+    );
 
     const order = [
       document.querySelector("header"),
-      document.querySelector("[data-health-strip]"),
       screen.getByRole("region", { name: "Key metrics" }),
-      document.querySelector('[data-module="statistics"]'),
-      document.querySelector('[data-module="traffic-rank"]'),
+      document.querySelector('[data-module="revenue"]'),
+      document.querySelector('[data-module="user"]'),
+      document.querySelector('[data-module="traffic-rank-nodes"]'),
+      document.querySelector('[data-module="traffic-rank-users"]'),
       screen.getByTestId("billing"),
     ];
     for (let i = 1; i < order.length; i++) {
@@ -90,9 +86,12 @@ describe("Home layout B", () => {
     expect(document.querySelector("[data-admin-home]")?.className).toContain(
       "admin-home"
     );
+    // A has no status strip and no overall health badge.
+    expect(document.querySelector("[data-health-strip]")).toBeNull();
+    expect(document.querySelector("[data-health]")).toBeNull();
   });
 
-  it("does not claim health when only revenue fails", async () => {
+  it("keeps server and ticket results when only revenue fails", async () => {
     mockApi(request, {
       server: healthyServer,
       ticket: { count: 0 },
@@ -101,36 +100,19 @@ describe("Home layout B", () => {
     });
     renderWithClient(<Dashboard />);
 
-    await waitFor(() => expect(overall()).toBe("Some statistics unavailable"));
-    expect(screen.queryByText("All systems normal")).toBeNull();
-    expect(screen.getByText("Servers 3/3 online")).toBeTruthy();
-    expect(screen.getByText("Tickets none pending")).toBeTruthy();
-    expect(screen.getByText("Failed to load data")).toBeTruthy();
-    expect(screen.getByText("Failed to load")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBe(1);
-  });
-
-  it("does not claim health when only user statistics fail", async () => {
-    mockApi(request, {
-      server: healthyServer,
-      ticket: { count: 0 },
-      revenue: emptyRevenue,
-      user: new Error("user down"),
-    });
-    renderWithClient(<Dashboard />);
-
-    await waitFor(() => expect(overall()).toBe("Some statistics unavailable"));
-    expect(screen.queryByText("All systems normal")).toBeNull();
-    expect(screen.getByText("Servers 3/3 online")).toBeTruthy();
-    expect(screen.getByText("Tickets none pending")).toBeTruthy();
-    const statsTypes = screen.getByRole("tablist", { name: "Statistics type" });
-    fireEvent.mouseDown(
-      within(statsTypes).getByRole("tab", { name: "Users" }),
-      {
-        button: 0,
-      }
+    await waitFor(() =>
+      expect(
+        within(
+          document.querySelector('[data-module="revenue"]') as HTMLElement
+        ).getByText("Failed to load data")
+      ).toBeTruthy()
     );
-    expect(await screen.findByText("Failed to load data")).toBeTruthy();
+    expect(card("server").textContent).toContain("Online 3");
+    expect(card("ticket").querySelector("[data-kpi-value]")?.textContent).toBe(
+      "0"
+    );
+    expect(screen.queryByText("Failed to load")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBe(1);
   });
 
   it("keeps the real server result visible when revenue fails and servers are offline", async () => {
@@ -142,16 +124,13 @@ describe("Home layout B", () => {
     });
     renderWithClient(<Dashboard />);
 
-    await waitFor(() => expect(overall()).toBe("Needs attention"));
-    expect(
-      screen
-        .getByText("Servers 34/36 online · 2 offline")
-        .closest("[data-status-item]")
-        ?.getAttribute("data-tone")
-    ).toBe("danger");
+    await waitFor(() =>
+      expect(card("server").getAttribute("data-tone")).toBe("danger")
+    );
+    expect(card("server").textContent).toContain("Offline 2");
   });
 
-  it("shows no pending/normal text when every console request fails", async () => {
+  it("shows no zero or normal text when every console request fails", async () => {
     mockApi(request, {
       server: new Error("x"),
       ticket: new Error("x"),
@@ -160,9 +139,14 @@ describe("Home layout B", () => {
     });
     renderWithClient(<Dashboard />);
 
-    await waitFor(() => expect(overall()).toBe("Some status unavailable"));
-    expect(screen.queryByText("All systems normal")).toBeNull();
-    expect(screen.queryByText("Tickets none pending")).toBeNull();
+    await waitFor(() =>
+      expect(screen.getAllByText("Failed to load data")).toHaveLength(4)
+    );
+    expect(screen.getAllByText("Failed to load")).toHaveLength(5);
+    for (const el of document.querySelectorAll("[data-kpi-value]")) {
+      expect(el.textContent).toBe("—");
+    }
+    expect(screen.queryByText("No servers connected")).toBeNull();
     expect(document.body.textContent).not.toContain("NaN");
   });
 
@@ -175,7 +159,7 @@ describe("Home layout B", () => {
       version: { version: "1.0.0" },
     });
     renderWithClient(<Dashboard />);
-    await waitFor(() => expect(overall()).toBe("All systems normal"));
+    await screen.findByText("V1.0.0");
 
     const allowed = new Set<string>(Object.values(URLS));
     const urls = new Set(request.mock.calls.map(([url]) => String(url)));
