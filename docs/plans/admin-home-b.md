@@ -1,12 +1,13 @@
 # 管理后台 Home B：技术方案与验收映射
 
-> 状态：第 1 轮评审要求修改，已按意见修订（失败不伪装健康覆盖收入/用户统计；token 作用域收窄到 Home），待重新评审。评审通过前不开始实现。方案有任何改动都要重新评审。
+> 状态：方案已获批，已由 [PR #36](https://github.com/phenix3443/ppanel-frontend/pull/36) 实现。验收以 [验收标准修订版](admin-home-b-acceptance.md) 为准；修订只澄清验收表述、同步取证方式，实现方案不变。方案有任何改动都要重新评审。
 
 ## 依据
 
 | 项 | 值 |
 |---|---|
 | 需求与验收 | [PR #34](https://github.com/phenix3443/ppanel-frontend/pull/34)（draft / do-not-merge）及其 [README](https://github.com/phenix3443/ppanel-frontend/blob/3ccb483819e7bc302f219a20fb693f9bb751aaf7/apps/admin/prototype/home-visual/README.md) |
+| 验收标准修订版 | [admin-home-b-acceptance.md](admin-home-b-acceptance.md)，替代 README「验收标准」一节；依据 [PR #34 验收条款 CR](https://github.com/phenix3443/ppanel-frontend/pull/34#issuecomment-6437754047) |
 | 视觉选择获批 SHA | `8ef6b6ff3f0cba863f8fe2a43d899550d627176e` |
 | 定稿 SHA | `3ccb483819e7bc302f219a20fb693f9bb751aaf7` |
 | 方案基线 | `origin/main` `b0f3cd1fc8576bdb31298637b056d44f12aa7f99`（定稿 SHA 相对它只新增 `apps/admin/prototype/home-visual/`，业务代码一致） |
@@ -14,7 +15,7 @@
 
 原型只用来读设计。实现从 `origin/main` 开新分支，不合入、不复制 `apps/admin/prototype/`，也不以 PR #34 的分支为基线。
 
-文中「验收 N」指 README「验收标准」第 N 条。
+文中「验收 N」指[验收标准修订版](admin-home-b-acceptance.md)第 N 条，编号与 README 原稿一致。
 
 ## 现状（已读代码）
 
@@ -228,20 +229,20 @@ Home 根元素用容器查询（Tailwind v4 内置 `@container`），按内容�
 
 ## 验收映射
 
-「自动」是 CI 和本地能跑的检查；「Board」是 Board 在自己 Mac 上的浏览器取证（步骤见下一节）。agent 不启动浏览器，自动检查通过不代表浏览器验收通过。
+「自动」是 CI 和本地能跑的检查；「浏览器取证」见下一节。自动检查通过不代表浏览器取证通过。
 
-| # | 验收 | 实现位置 | 自动检查 | Board 取证 |
+| # | 验收 | 实现位置 | 自动检查 | 浏览器取证 |
 |---|---|---|---|---|
 | 1 | B 排序与布局；深色三档底色 | `index.tsx` 顺序 header → 状态条 → 指标带 → 主区 → 赞助；`admin.css` token | `home.test.tsx`：DOM 顺序（`compareDocumentPosition`）；`theme-tokens.test.ts`：深色 canvas/surface/surface-raised 值与 README 一致 | B1：1440px 深色截图与 `shots/B-*-dark.png` 对照 |
 | 2 | 文字与状态色对比度 ≥ 4.5 : 1（深浅两套） | `admin.css` | `theme-tokens.test.ts`：解析 `admin.css` 的 token，计算 WCAG 对比度：text-1/2/3、signal、success、danger、warning、info 分别对 canvas、surface、surface-raised，以及状态色对其 `*-soft` 叠在 surface 上的合成底色，深浅两套都 ≥ 4.5 | B2：DevTools 抽查徽标、辅助文字的对比度 |
 | 3 | warning 与 signal 分离，工单 > 0 用 warning | `admin.css`；`health-strip.tsx` 工单项 `data-tone="warning"` | `theme-tokens.test.ts`：两套主题里 warning ≠ signal；`health-strip.test.tsx`：工单 3 → 工单徽标 `data-tone="warning"` | B3：需关注场景截图 |
-| 4 | 离线或工单 > 0 时首屏可见且有颜色；都为 0 时运行状态项无红黄 | `lib/health.ts`；`health-strip.tsx` | `health.test.ts` 覆盖全部分支；`health-strip.test.tsx`：都为 0 时，整体徽标、服务器项、工单项（带 `data-status-item` 的元素）都没有 `data-tone="danger"` / `"warning"`。重启按钮始终用 danger 色，不在检查范围内 | B4：1440px 和 390px 首屏是否能看到异常项 |
-| 5 | 全空时图表和排行显示空状态，无空白卡、无 NaN | `module-states.tsx`；各 panel 与排行 | `statistics-card.test.tsx`、`traffic-rank-card.test.tsx`：全空响应下出现 ModuleEmpty 文案，`document.body.textContent` 不含 `NaN` | B5：空数据场景截图 |
+| 4 | 离线或工单 > 0 时首屏（1440×900 / 390×844，未滚动）可见且有颜色；都成功取得且为 0 时运行状态项无红黄，重启按钮除外 | `lib/health.ts`；`health-strip.tsx` | `health.test.ts` 覆盖全部分支；`health-strip.test.tsx`：都为 0 时，整体徽标、服务器项、工单项（带 `data-status-item` 的元素）都没有 `data-tone="danger"` / `"warning"`。重启按钮始终用 danger 色，不在检查范围内 | B4：1440×900 和 390×844 未滚动时是否能看到异常项 |
+| 5 | 成功返回空数据时图表和排行显示空状态，无空白卡、无 NaN | `module-states.tsx`；各 panel 与排行 | `statistics-card.test.tsx`、`traffic-rank-card.test.tsx`：全空响应下出现 ModuleEmpty 文案，`document.body.textContent` 不含 `NaN` | B5：空数据场景截图 |
 | 6 | KPI 与排行数字 tabular-nums | `metric-band.tsx`、汇总、`traffic-rank-card.tsx` | 组件测试：数值节点带 `tabular-nums` class | B6：DevTools Computed 查 `font-variant-numeric` |
 | 7 | 浅色可切换且满足第 2 条 | `admin.css` `:root` 浅色值；沿用 ThemeProvider | 同第 2 条（浅色那一套） | B7：浅色截图 + 抽查对比度 |
 | 8 | token 只在 admin 内，不改 globals.css、不影响 user；admin 其他页面不受影响 | `apps/admin/src/styles/admin.css`；`main.tsx` import | `git diff --exit-code origin/main -- packages/ui apps/user apps/admin/src/layout` 无输出；构建后 `grep -rl -- '--ds-' apps/user/dist` 无结果，`apps/admin/dist` 有结果；`theme-tokens.test.ts`：解析 `admin.css`，选择器为 `:root` / `.dark` 的规则只声明 `--ds-*`，所有覆盖 shadcn 变量的规则，选择器都含 `.admin-home` 或 `:has([data-admin-home])` | B8：打开 user 端首页，确认外观没变；B13：admin 其他页面深浅两套主题回归 |
 | 9 | 数据来源、跳转、重启流程不变 | `use-dashboard-data.ts`；`health-strip.tsx` 链接；`system-restart.tsx` | 原三个重启/版本用例保留断言；新增：在线用户和服务器链接 `href` 含 `/dashboard/servers`，工单链接含 `/dashboard/ticket`；请求路径只有 5 个 GET + 1 个 POST | B9：点三个链接；打开重启对话框后点取消（不在生产环境确认重启） |
-| 10 | 加载、失败、真实零值可区分；失败不显示「运行正常」「无待处理」；保留重试/刷新 | `lib/module-state.ts`、`lib/health.ts`、`module-states.tsx` | `health.test.ts`：四个模块里任一个 error 或 loading → 不是 `ok`；逐条覆盖：只有收入失败 → `partial`，只有用户统计失败 → `partial`，收入失败且离线 2 → `attention`；`home.test.tsx`（四个 query 一起渲染）：只让 revenue 请求失败、只让 user 请求失败，两种情况都不出现「All systems normal」，整体徽标为「Some statistics unavailable」，服务器项、工单项仍显示 mock 返回的真实结果，对应模块出现失败文案和重试；`health-strip.test.tsx`：服务器请求失败时不出现「All systems normal」，出现失败文案，点重试后请求次数 +1；工单失败时不出现「无待处理」；`metric-band.test.tsx`：失败显示 `—` 不显示 `0`，真实 0 显示 `0` | B10：用 DevTools 分别阻断 server、ticket、revenue、user 单个接口，再阻断全部接口、慢速网络，分别截图 |
+| 10 | 加载、失败、成功空数据、真实零值可区分；失败模块不显示 0/「无待处理」，成功模块保留真实结果，整体不显示「运行正常」；保留重试/刷新 | `lib/module-state.ts`、`lib/health.ts`、`module-states.tsx` | `health.test.ts`：四个模块里任一个 error 或 loading → 不是 `ok`；逐条覆盖：只有收入失败 → `partial`，只有用户统计失败 → `partial`，收入失败且离线 2 → `attention`；`home.test.tsx`（四个 query 一起渲染）：只让 revenue 请求失败、只让 user 请求失败，两种情况都不出现「All systems normal」，整体徽标为「Some statistics unavailable」，服务器项、工单项仍显示 mock 返回的真实结果，对应模块出现失败文案和重试；`health-strip.test.tsx`：服务器请求失败时不出现「All systems normal」，出现失败文案，点重试后请求次数 +1；工单失败时不出现「无待处理」；`metric-band.test.tsx`：失败显示 `—` 不显示 `0`，真实 0 显示 `0` | B10：用 DevTools 分别阻断 server、ticket、revenue、user 单个接口，再阻断全部接口、慢速网络，分别截图 |
 | 11 | 键盘可达、焦点可见、选中可读、图表有数据说明 | 见「可访问性」 | 组件测试：Tabs 有 `aria-label`，选中项 `aria-selected="true"`；图表旁存在 `sr-only` 表格且行数等于数据点数 | B11：只用键盘走一遍；无障碍树中有状态条区域、Tabs 选中状态、图表表格 |
 | 12 | 1440px / 390px 下状态条、长名称、空状态可读，无页面级横向溢出 | 见「布局与响应式」 | `traffic-rank-card.test.tsx`：60 字符节点名完整出现在 `title` 和可访问名称里（jsdom 不能测布局，只测内容不丢） | B12：两种宽度下检查溢出（命令见下） |
 
@@ -267,23 +268,25 @@ grep -rl -- '--ds-' apps/admin/dist  # 期望有输出
 
 新增文案写入 `apps/admin/public/assets/locales/{en-US,zh-CN}/dashboard.json`，用 `bun run i18n:status` 确认没有缺失 key。
 
-## Board 手工取证清单
+## 浏览器取证清单
 
-agent 不启动浏览器。下列各项都需要 Board 在自己的 Mac 上操作。每项记录：实现 PR 的 head SHA、浏览器及版本、主题、视口宽度、截图。
+由 agent 用 `scripts/paperclip/browser.sh` 在宿主的 Playwright 容器中操作（Chromium、Firefox、WebKit），再由未参与实现的 Coder 独立核对脚本和截图。每项记录：被测 head SHA、浏览器及版本、主题、视口（宽 × 高）、截图和通过/失败。
+
+历史：本节原名「Board 手工取证清单」，原定由 Board 在自己的 Mac 上操作、agent 不启动浏览器。2026-10-27 Board 决定改由 agent 取证，原规则不再执行。下表「操作」列仍按 DevTools 的写法描述场景；用 Playwright 时，用 `viewport`、`colorScheme` 和 `context.route` 构造等价场景。
 
 准备：
 
-1. 检出实现 PR 的 head SHA，`bun install`，在 `apps/admin` 配好指向**测试后端**的 `VITE_API_PREFIX`，运行 `bun run dev`，打开 `http://localhost:3001/#/dashboard`。
+1. 检出实现 PR 的 head SHA，`bun install`，在 `apps/admin` 运行 `bun run dev`，打开 `http://localhost:3001/#/dashboard`。B1–B13 的数据场景用构造响应（`context.route` 拦截 `/v1/*`）；构造响应只证明前端在这些响应下的行为，不证明与测试后端联调。测试后端联调是否需要做，单独决定。
 2. 不要连生产后端做 B9 的重启确认。
-3. 需要构造数据场景时，用 Chrome DevTools → Network → 右键请求 → Override content，改写 `/v1/admin/console/server` 或 `/v1/admin/console/ticket` 的响应。
+3. 需要构造数据场景时，用 `context.route` 改写 `/v1/admin/console/*` 的响应：空数据按各接口的有效响应形状返回空列表或 0，失败返回 HTTP 500，加载中不响应。
 
 | 编号 | 操作 | 通过标准 |
 |---|---|---|
 | B1 | 深色、1440px 宽，截全页 | 顺序为状态条 → 指标带 → 统计/排行 → 赞助；三档底色与 `shots/B-alert-dark.png` 一致 |
 | B2 | DevTools 选中状态徽标文字、辅助文字，看 Accessibility 面板的 contrast | 均 ≥ 4.5 |
 | B3 | 改写 ticket 响应 `count: 3` | 工单徽标为黄色，和导航当前项的橙色明显不同 |
-| B4 | 改写 server 响应 `offline_servers: 2`，在 1440px 和 390px（DevTools Device Toolbar）下不滚动查看 | 首屏能看到「2 台离线」，红色；都改回 0 后，整体徽标、服务器项、工单项都没有红色或黄色（重启按钮始终是红色描边，不算） |
-| B5 | 四个 console 接口都改写成空数组/0 | 每个图表、排行是虚线空状态，没有空白卡片，没有 NaN；状态条显示「尚未接入服务器」 |
+| B4 | 改写 server 响应为在线 4、离线 2，在 1440×900 和 390×844 视口下加载完成后不滚动查看 | 首屏能看到「2 台离线」，红色；都改回 0 后，整体徽标、服务器项、工单项都没有红色或黄色（重启按钮始终是红色描边，不算） |
+| B5 | 四个 console 接口都成功返回空数据（按各接口有效响应形状） | 每个图表、排行是虚线空状态，没有空白卡片，没有 NaN；状态条显示「尚未接入服务器」 |
 | B6 | 选中一个 KPI 数字，看 Computed | `font-variant-numeric: tabular-nums` |
 | B7 | 切到浅色，重复 B1、B2 | 同标准 |
 | B8 | 打开 user 端（`apps/user` 的 dev），对比 main 的截图 | 外观无变化 |
@@ -293,7 +296,7 @@ agent 不启动浏览器。下列各项都需要 Board 在自己的 Mac 上操�
 | B12 | 1440px 和 390px 下，把一个节点名改写成 60 个字符；在 Console 运行 `const c=document.querySelector('[data-admin-home]').parentElement; [c.scrollWidth, c.clientWidth, document.documentElement.scrollWidth, innerWidth]` | 前两个数相等、后两个数相等（没有页面级横向滚动）；长名称截断但 hover 能看到全名，流量值完整显示 |
 | B13 | 深色、浅色各做一遍，1440px：先在 main 分支截图，再在实现 PR 截图，对比同一组页面。(a) 直接打开 `/#/dashboard/payment`（至少一条支付方式），截全页，并截一行「Copy」按钮（`variant="outline"`）和顶栏右侧语言/时区/主题按钮；(b) 打开 `/#/dashboard/user`，截全页；(c) 从 Home 点侧栏进入 `/#/dashboard/payment`，再截一次；(d) 在 Home 上，DevTools 选中顶栏右侧按钮，看 Computed 的 `background-color` | (a)(b)(c) 与 main 截图一致：outline 按钮底色、侧栏、顶栏、内容底色都没变（离开 Home 后外框恢复原样）。(d) 顶栏按钮的 `background-color` 与 main 上同一按钮一致，只有顶栏容器本身是 canvas 色 |
 
-README 里的可用性验证（任务耗时、第一次点击、误判）是另一件事，不在本清单里，也不能用本清单的结果代替。
+README 里的可用性验证（任务耗时、第一次点击、误判）是后续可选研究，不是交付门禁（见验收标准修订版「可用性研究」），不在本清单里，也不能用本清单的结果代替。
 
 ## 风险
 
@@ -302,7 +305,7 @@ README 里的可用性验证（任务耗时、第一次点击、误判）是另�
 | 外框只在 Home 打开时换色 | 从 Home 切到其他页面时，侧栏和顶栏会从暖色变回原色 | 这是只改 Home 的代价，其他页面因此和 main 完全一致。B13 (c) 确认离开 Home 后外框恢复原样 |
 | 外框依赖 `:has()` 和 `data-slot="sidebar-inset"` | 旧浏览器不支持 `:has()` 时外框不换色；以后上游改了 `data-slot` 名称，选择器会失效 | 都只影响外框，Home 内容不受影响。`theme-tokens.test.ts` 检查选择器文本；上游同步时如果 `sidebar.tsx` 有变化，复查一次 B13 |
 | `@import "@workspace/ui/globals.css"` 再追加 `@theme inline` 的 Tailwind v4 写法 | 若构建不认，ds 工具类不生成 | 实现第一步先跑 `bun run build` 验证。不行就不用 `@theme`，改用 `bg-(--ds-surface)` 这类任意值写法，作用域结论不变 |
-| React Query 默认重试 3 次 | 接口挂掉时要等约 7 秒才进入失败状态，期间显示骨架 | 沿用现有行为，不改全局 retry。Board 在 B10 记录实际等待时间，如需缩短另提 |
+| React Query 默认重试 3 次 | 接口挂掉时要等约 7 秒才进入失败状态，期间显示骨架 | 沿用现有行为，不改全局 retry。B10 记录实际等待时间，如需缩短另提 |
 | 失败时请求层会弹 toast | 一次加载可能弹 2–3 个错误提示 | 现有行为，属于「保留的反馈」，不改 |
 | 中文回退系统字体 | Windows 上中文是微软雅黑，和设计稿的 Noto Sans SC 有差异 | 后台用户就是站长本人（Mac，PingFang SC）。如需一致再加 `@fontsource/noto-sans-sc` |
 | 合并统计卡后 today 饼图高度变小 | 小屏上图例可能挤 | 图表高度保持 `h-60` 以上，B4/B12 截图确认 |
@@ -336,4 +339,4 @@ README 里的可用性验证（任务耗时、第一次点击、误判）是另�
 4. 状态条、整体徽标、指标带（验收 1、3、4、6、10）
 5. 统计卡、排行、空/错/加载态、图表数据表（验收 5、6、11）
 6. 布局、字体、赞助区样式（验收 1、12）
-7. 文案、i18n、自检，交独立评审；Board 按清单取证
+7. 文案、i18n、自检，交独立评审；按清单做浏览器取证
