@@ -13,7 +13,7 @@ import { UserDetail, UserSubscribeDetail } from "@/sections/user/user-detail";
 import { useServerTotal } from "../hooks/use-dashboard-data";
 import { toModuleState } from "../lib/module-state";
 import { ModuleEmpty, ModuleError, ModuleLoading } from "./module-states";
-import { segmentListClass, segmentTriggerClass } from "./statistics-card";
+import { segmentListClass, segmentTriggerClass } from "./segment";
 
 type Day = "today" | "yesterday";
 type Target = "nodes" | "users";
@@ -23,6 +23,7 @@ export type RankRow = {
   name: string;
   traffic: number;
   uid?: number;
+  sid?: number;
 };
 
 export function rankRows(
@@ -48,6 +49,7 @@ export function rankRows(
   return (list ?? []).map((item, i) => ({
     key: `${item.sid}-${i}`,
     name: String(item.sid),
+    sid: item.sid,
     uid: item.uid,
     traffic: item.upload + item.download,
   }));
@@ -79,7 +81,7 @@ function UserRowDetail({ row }: { row: RankRow }) {
             <Separator className="my-2" />
           </>
         ) : null}
-        <UserSubscribeDetail enabled={true} id={Number(row.name)} />
+        <UserSubscribeDetail enabled={true} id={row.sid ?? 0} />
       </PopoverContent>
     </Popover>
   );

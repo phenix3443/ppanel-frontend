@@ -5,15 +5,11 @@ import { useRevenue, useUserStats } from "../hooks/use-dashboard-data";
 import { toModuleState } from "../lib/module-state";
 import { ModuleError, ModuleLoading } from "./module-states";
 import RevenuePanel from "./revenue-panel";
+import { segmentListClass, segmentTriggerClass } from "./segment";
 import type { Period } from "./stats-chart";
 import UserPanel from "./user-panel";
 
 type Kind = "revenue" | "user";
-
-export const segmentListClass =
-  "h-8 rounded-[10px] border border-ds-border-subtle bg-ds-canvas p-0.5";
-export const segmentTriggerClass =
-  "rounded-[8px] px-2.5 text-xs text-ds-text-2 focus-visible:ring-[3px] focus-visible:ring-ring data-[state=active]:bg-ds-surface-raised data-[state=active]:text-ds-text-1 data-[state=active]:shadow-none";
 
 export default function StatisticsCard() {
   const { t } = useTranslation("dashboard");

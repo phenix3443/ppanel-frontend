@@ -40,7 +40,9 @@ function formatTick(value: string, period: Period, locale: string) {
       day: "numeric",
     });
   }
+  // Total spans years, so keep the year to avoid repeated month labels.
   return new Date(year, month - 1).toLocaleDateString(locale, {
+    year: "numeric",
     month: "short",
   });
 }
@@ -72,8 +74,8 @@ export function ChartDataTable({
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => (
-          <tr key={row.label}>
+        {rows.map((row, index) => (
+          <tr key={`${row.label}-${index}`}>
             <th scope="row">{row.label}</th>
             {series.map((s) => (
               <td key={s.key}>{format(row.values[s.key] ?? 0)}</td>
