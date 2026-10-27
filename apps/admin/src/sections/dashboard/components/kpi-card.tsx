@@ -57,7 +57,6 @@ export function KpiCard({
   value,
   detail,
   tone = "muted",
-  valueTone,
   href,
   onRetry,
   className,
@@ -69,7 +68,6 @@ export function KpiCard({
   value: ReactNode;
   detail?: ReactNode;
   tone?: Tone;
-  valueTone?: "warning";
   href?: "/dashboard/servers" | "/dashboard/ticket";
   onRetry?: () => void;
   className?: string;
@@ -80,9 +78,10 @@ export function KpiCard({
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-ds-text-2 text-xs">{label}</span>
         <span
+          aria-busy={status === "loading" || undefined}
           className={cn(
             "font-semibold text-[28px] tabular-nums leading-tight",
-            valueTone === "warning" ? "text-ds-warning" : "text-ds-text-1"
+            tone === "warning" ? "text-ds-warning" : "text-ds-text-1"
           )}
           data-kpi-value
         >
@@ -97,7 +96,6 @@ export function KpiCard({
         </span>
       </div>
       <span
-        aria-hidden="true"
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-[10px] border",
           iconToneClass[tone]

@@ -1,7 +1,19 @@
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
+import { cn } from "@workspace/ui/lib/utils";
 import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
+import { cardClass } from "./kpi-card";
 import { segmentListClass, segmentTriggerClass } from "./segment";
+import type { Period } from "./stats-chart";
+
+export function usePeriodOptions(): [Period, string][] {
+  const { t } = useTranslation("dashboard");
+  return [
+    ["today", t("today", "Today")],
+    ["month", t("month", "Month")],
+    ["total", t("total", "Total")],
+  ];
+}
 
 /** Card shell with a title and one segmented tab group in the header. */
 export function PeriodCard<V extends string>({
@@ -24,7 +36,7 @@ export function PeriodCard<V extends string>({
   return (
     <section
       aria-labelledby={titleId}
-      className="flex min-w-0 flex-col gap-4 rounded-2xl border border-ds-border-subtle bg-ds-surface p-5 shadow-ds-highlight"
+      className={cn(cardClass, "gap-4")}
       data-module={module}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

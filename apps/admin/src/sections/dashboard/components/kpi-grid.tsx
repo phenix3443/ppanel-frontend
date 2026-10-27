@@ -67,7 +67,6 @@ function TicketCard() {
       status={ticket.status}
       tone={tone}
       value={ticket.status === "ready" ? ticket.data : null}
-      valueTone={tone === "warning" ? "warning" : undefined}
     />
   );
 }
@@ -96,7 +95,7 @@ export default function KpiGrid() {
         label={t("onlineUsersCount", "Online Users")}
         onRetry={retry}
         status={server.status}
-        value={data?.online_users}
+        value={data ? data.online_users : null}
       />
       <KpiCard
         detail={

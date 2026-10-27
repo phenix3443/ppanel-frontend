@@ -123,6 +123,7 @@ export function StatsChart({
                 content={<ChartTooltipContent hideLabel />}
                 cursor={false}
               />
+              {/* The sr-only table carries the data; keep the donut out of the Tab order (it has no visible focus). */}
               <Pie
                 data={series.map((s) => ({
                   type: s.key,
@@ -132,6 +133,7 @@ export function StatsChart({
                 dataKey="value"
                 innerRadius={50}
                 nameKey="type"
+                rootTabIndex={-1}
                 stroke="var(--ds-surface)"
                 strokeWidth={4}
               />

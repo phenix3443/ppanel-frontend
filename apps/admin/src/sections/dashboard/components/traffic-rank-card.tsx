@@ -15,7 +15,7 @@ import { ModuleEmpty, ModuleError, ModuleLoading } from "./module-states";
 import { PeriodCard } from "./period-card";
 
 type Day = "today" | "yesterday";
-export type Target = "nodes" | "users";
+type Target = "nodes" | "users";
 
 export type RankRow = {
   key: string;
