@@ -8,6 +8,7 @@ export type ServerStatus = {
 export type Health =
   | "unknown"
   | "checking"
+  | "loading"
   | "attention"
   | "partial"
   | "no-servers"
@@ -30,7 +31,7 @@ export function deriveHealth(
   if (server.status !== "ready" || ticket.status !== "ready") return "checking";
   if (server.data.offline_servers > 0 || ticket.data > 0) return "attention";
   if (revenue.status === "error" || user.status === "error") return "partial";
-  if (revenue.status !== "ready" || user.status !== "ready") return "checking";
+  if (revenue.status !== "ready" || user.status !== "ready") return "loading";
   if (server.data.online_servers + server.data.offline_servers === 0) {
     return "no-servers";
   }

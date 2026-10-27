@@ -56,8 +56,8 @@ const cases: Case[] = [
   ],
   ["revenue error only", healthy, ready(0), error, stats, "partial"],
   ["user error only", healthy, ready(0), stats, error, "partial"],
-  ["revenue loading", healthy, ready(0), loading, stats, "checking"],
-  ["user loading", healthy, ready(0), stats, loading, "checking"],
+  ["revenue loading", healthy, ready(0), loading, stats, "loading"],
+  ["user loading", healthy, ready(0), stats, loading, "loading"],
   [
     "no servers",
     ready({ online_servers: 0, offline_servers: 0 }),
@@ -89,7 +89,13 @@ describe("health presentation", () => {
   it("uses success only for ok and warning only for attention", () => {
     expect(healthTone("ok")).toBe("success");
     expect(healthTone("attention")).toBe("warning");
-    for (const h of ["unknown", "checking", "partial", "no-servers"] as const) {
+    for (const h of [
+      "unknown",
+      "checking",
+      "loading",
+      "partial",
+      "no-servers",
+    ] as const) {
       expect(healthTone(h)).toBe("muted");
     }
   });

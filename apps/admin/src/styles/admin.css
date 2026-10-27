@@ -148,3 +148,9 @@ body:has([data-admin-home]) {
   font-family: var(--ds-font-sans);
   color: var(--ds-text-1);
 }
+
+/* Home cards (including the shared sponsor cards) drop the default shadow. */
+.admin-home [data-slot="card"] {
+  box-shadow: var(--ds-highlight);
+  border-color: var(--ds-border-subtle);
+}
