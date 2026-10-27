@@ -2,6 +2,7 @@
 <!--
   PROTOTYPE — 一次性视觉稿，不是生产代码，不要合入 main。
   问题：管理后台 Home（/dashboard）在暖黑 + 橙色强调的视觉语言下应该长什么样？
+  Board 已选定 B；默认打开 B，A/C 仅供历史对照。
   三个结构不同的变体通过 ?variant=A|B|C 切换；底部浮条可切换变体、主题和数据场景。
   数据全部为本地 mock，字段与 apps/admin/src/sections/dashboard 现有接口一一对应，没有新增业务数据。
   直接双击打开即可（字体走 Google Fonts，离线时回退系统字体）。
@@ -459,7 +460,7 @@ const qs = () => new URLSearchParams(location.search);
 function setQ(k, v) { const p=qs(); p.set(k,v); history.replaceState(null,"","?"+p.toString()); render(); }
 function render() {
   const p = qs();
-  const vi = Math.max(0, VARIANTS.findIndex(v=>v[0]===(p.get("variant")||"A")));
+  const vi = Math.max(0, VARIANTS.findIndex(v=>v[0]===(p.get("variant")||"B")));
   const scn = p.get("scenario") || "normal";
   document.documentElement.dataset.theme = p.get("theme") || "dark";
   const [k, name, fn] = VARIANTS[vi];
@@ -468,7 +469,7 @@ function render() {
   document.querySelectorAll("[data-scn]").forEach(b=>b.classList.toggle("on", b.dataset.scn===scn));
   document.getElementById("themeBtn").textContent = (p.get("theme")||"dark")==="dark" ? "主题：深色" : "主题：浅色";
 }
-function cycle(dir) { const cur = VARIANTS.findIndex(v=>v[0]===(qs().get("variant")||"A")); setQ("variant", VARIANTS[(cur+dir+VARIANTS.length)%VARIANTS.length][0]); }
+function cycle(dir) { const cur = VARIANTS.findIndex(v=>v[0]===(qs().get("variant")||"B")); setQ("variant", VARIANTS[(cur+dir+VARIANTS.length)%VARIANTS.length][0]); }
 document.getElementById("prev").onclick = () => cycle(-1);
 document.getElementById("next").onclick = () => cycle(1);
 document.querySelectorAll("[data-scn]").forEach(b=> b.onclick = () => setQ("scenario", b.dataset.scn));
