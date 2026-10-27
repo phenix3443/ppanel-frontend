@@ -1,5 +1,7 @@
 # 管理后台 Home B：验收标准（修订版）
 
+> **已被取代的布局选择。** Board 于 2026-10-27 09:07 UTC 改选 A。下文中针对 B 布局的表述（状态条、指标带、整体健康徽标）只作历史记录；A 下各条怎么适用，见 [admin-home-a.md](admin-home-a.md)「验收映射」。下文与布局无关的澄清（术语、视口、四种状态、取证方式、可用性研究）继续有效。
+
 > 修订 1。本文件替代原稿「验收标准」一节，作为 Home B 的验收依据。原稿保留在 [PR #34 定稿 README](https://github.com/phenix3443/ppanel-frontend/blob/3ccb483819e7bc302f219a20fb693f9bb751aaf7/apps/admin/prototype/home-visual/README.md#L156)（第 156–170 行），不修改。
 >
 > 修订依据是 [PR #34 的验收条款 CR](https://github.com/phenix3443/ppanel-frontend/pull/34#issuecomment-6437754047)，以及 CTO 对返修范围的裁定。本次只澄清表述，并把验收结果和取证方法分开写。12 条都保留，编号不变；业务范围和应用功能都不变。要改业务验收范围，须由 Board 决定。

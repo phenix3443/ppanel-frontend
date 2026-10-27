@@ -1,5 +1,7 @@
 # 管理后台 Home B：技术方案与验收映射
 
+> **已被取代。** Board 于 2026-10-27 09:07 UTC 改选 A，B 的布局不再是当前依据。A 的方案差异与验收映射见 [admin-home-a.md](admin-home-a.md)。本文保留为 B 的实现记录（[PR #36](https://github.com/phenix3443/ppanel-frontend/pull/36) 已合并）。
+
 > 状态：方案已获批，已由 [PR #36](https://github.com/phenix3443/ppanel-frontend/pull/36) 实现。验收以 [验收标准修订版](admin-home-b-acceptance.md) 为准；修订只澄清验收表述、同步取证方式，实现方案不变。方案有任何改动都要重新评审。
 
 ## 依据
@@ -11,7 +13,7 @@
 | 视觉选择获批 SHA | `8ef6b6ff3f0cba863f8fe2a43d899550d627176e` |
 | 定稿 SHA | `3ccb483819e7bc302f219a20fb693f9bb751aaf7` |
 | 方案基线 | `origin/main` `b0f3cd1fc8576bdb31298637b056d44f12aa7f99`（定稿 SHA 相对它只新增 `apps/admin/prototype/home-visual/`，业务代码一致） |
-| 决定 | Board 选定 B（运维优先），运行状态先于收入。本项目不开 GitHub Issues，以 PR #34 + README 为准 |
+| 决定 | （历史）Board 选定 B（运维优先），运行状态先于收入；已于 2026-10-27 改选 A。本项目不开 GitHub Issues，以 PR #34 + README 为准 |
 
 原型只用来读设计。实现从 `origin/main` 开新分支，不合入、不复制 `apps/admin/prototype/`，也不以 PR #34 的分支为基线。
 
