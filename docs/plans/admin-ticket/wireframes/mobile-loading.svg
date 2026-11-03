@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="960" viewBox="0 0 384 960" font-family="-apple-system, system-ui, sans-serif" fill="#fff" stroke="#000" stroke-width="1.5" role="img" aria-labelledby="title desc">
+<title id="title">工单列表 — loading — 384×960</title>
+<desc id="desc">低保真静态设计，所有数据为合成示例，控件不可操作。1 现有导航；2 工具栏；3 状态筛选；4 列表或状态；5 分页。手机画布加长以展示滚动后内容。</desc>
+<!-- 384×960; 8px grid; static design only -->
+<rect x="0" y="0" width="384" height="960" rx="8" fill="#fff"/>
+<rect x="0" y="0" width="384" height="56" rx="8" fill="#fff"/>
+<text x="24" y="32" font-size="14" fill="#000" stroke="none">1  管理后台 · 工单</text>
+<text x="16" y="104" font-size="28" fill="#000" stroke="none">工单列表</text>
+<text x="16" y="136" font-size="12" fill="#666" stroke="none">2  刷新 / 列显示 / 重置</text>
+<rect x="16" y="152" width="80" height="48" rx="8" fill="#fff"/>
+<text x="24" y="184" font-size="14" fill="#000" stroke="none">刷新</text>
+<rect x="104" y="152" width="112" height="48" rx="8" fill="#fff"/>
+<text x="112" y="184" font-size="14" fill="#000" stroke="none">列显示</text>
+<rect x="224" y="152" width="112" height="48" rx="8" fill="#fff"/>
+<text x="232" y="184" font-size="14" fill="#000" stroke="none">重置</text>
+<text x="16" y="232" font-size="14" fill="#000" stroke="none">3  状态</text>
+<rect x="16" y="248" width="176" height="48" rx="8" fill="#fff"/>
+<text x="24" y="280" font-size="14" fill="#000" stroke="none">全部状态</text>
+<rect x="200" y="248" width="80" height="48" rx="8" fill="#fff"/>
+<text x="208" y="280" font-size="14" fill="#000" stroke="none">筛选</text>
+<rect x="288" y="248" width="80" height="48" rx="8" fill="#fff"/>
+<text x="296" y="280" font-size="14" fill="#000" stroke="none">清除</text>
+<text x="16" y="328" font-size="12" fill="#666" stroke="none">4  当前页结果 · 示例数据</text>
+<rect x="16" y="352" width="352" height="240" rx="8" fill="#fff"/>
+<text x="40" y="408" font-size="20" fill="#000" stroke="none">正在加载工单…</text>
+<text x="40" y="448" font-size="14" fill="#666" stroke="none">尚未取得结果，不显示 0 条。</text>
+<text x="16" y="632" font-size="12" fill="#666" stroke="none">不显示伪造的 0 / 1 页</text>
+<text x="16" y="928" font-size="12" fill="#666" stroke="none">静态线框 · 非应用验收</text>
+</svg>
